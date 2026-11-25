@@ -95,12 +95,14 @@ flowchart LR
 ```text
 ai-cyber-duel/
 ├── README.md                              # Guia visual da apresentação (esta página)
-├── requirements.txt                       # Dependências Python (rich, scikit-learn, numpy, pandas)
-├── .gitignore                             # Ignora venv, cache e variantes temporárias
+├── arena_duel_live.py                     # Arena ao vivo (Split-Screen): AST + Watchdog + Psutil + Ensemble IA
+├── requirements.txt                       # Dependências Python (rich, scikit-learn, numpy, pandas, psutil, watchdog)
+├── .gitignore                             # Ignora venv, cache, sandbox, quarentena e artefatos temporários
 ├── .devcontainer/
 │   └── devcontainer.json                  # Fallback 1-clique para GitHub Codespaces
 ├── 01-red-team-polymorphic/
 │   ├── README.md                          # Teoria: Polimorfismo e automação via LLMs
+│   ├── ast_transform_engine.py            # Motor de mutação estrutural real via AST (for->while, shuffle, opaque predicates)
 │   ├── polymorphic_simulator.py           # Gera payload original + 5 variantes polimórficas
 │   └── static_av_bypass_demo.py           # Simula AV por SHA-256 (prova a evasão estática)
 ├── 02-blue-team-realtime-ids/
@@ -191,6 +193,22 @@ python3 02-blue-team-realtime-ids/generate_telemetry_data.py
 ```bash
 python3 02-blue-team-realtime-ids/train_and_detect_ids.py
 ```
+
+### Passo 5 — Red Team (Avançado): Motor de Mutação Estrutural via AST
+```bash
+python3 01-red-team-polymorphic/ast_transform_engine.py
+```
+*(Gera ondas de variantes sintaticamente mutadas via módulo `ast` — reordenação de funções, conversão `for` → `while` e predicados opacos — prontas para execução segura em `sandbox_env/`.)*
+
+### Passo 6 — Arena Ao Vivo (Split-Screen): Telemetria Real de SO (`Watchdog` + `Psutil`) vs. Ondas AST
+```bash
+# Modo interativo (ideal para apresentação ao vivo no projetor)
+python3 arena_duel_live.py
+
+# Modo automático (sem pausa inicial)
+python3 arena_duel_live.py --auto
+```
+*(Executa 5 ondas de variantes AST em `sandbox_env/`, captura eventos reais de disco com `watchdog`, I/O com `psutil` e pings loopback `127.0.0.1`, classifica com Ensemble `RandomForest + IsolationForest`, isola amostras em `quarantine/` e gera o relatório técnico `RELATORIO_INCIDENTE_SOC.md`.)*
 
 > 💡 **Dica de Apresentação:** Cada script possui pausas interativas (`[Pressione ENTER para continuar...]`) para explicar os resultados no projetor. Para rodar sem pausas durante ensaios rápidos, adicione a flag `--auto` em qualquer comando.
 

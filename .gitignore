@@ -17,6 +17,9 @@ build/
 # Artefatos temporários gerados durante a demonstração ao vivo
 generated_variants/
 **/generated_variants/
+sandbox_env/
+quarantine/
+RELATORIO_INCIDENTE_SOC.md
 02-blue-team-realtime-ids/telemetry_dataset.csv
 
 # Arquivos de sistema operacional e editores
