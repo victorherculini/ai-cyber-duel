@@ -996,9 +996,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
     --bg: #060a12;
     --panel: #0e1624;
     --panel-2: #131f33;
-    --border: #22324d;
-    --text: #eef4ff;
-    --muted: #8ea3c2;
+    --border: #263a5a;
+    --text: #f3f7ff;
+    --muted: #a6bad8;
     --red: #ff4d5e;
     --amber: #fbbf24;
     --cyan: #38bdf8;
@@ -1008,6 +1008,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     --sans: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
   body {
     background: radial-gradient(circle at 20% 0%, #0f1c34 0%, var(--bg) 55%);
     color: var(--text);
@@ -1153,14 +1154,14 @@ HTML_PAGE = r"""<!DOCTYPE html>
 
   .verdict-split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .verdict-box { background: #0a101c; border: 1px solid var(--border); border-radius: 9px; padding: 10px 12px; }
-  .verdict-box h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
-  .verdict-box p { font-size: 0.82rem; color: #d5e2f7; line-height: 1.38; }
+  .verdict-box h4 { font-size: 0.84rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+  .verdict-box p { font-size: 0.86rem; color: #e2ecff; line-height: 1.44; }
   .vb-bypass { border-color: rgba(255,77,94,0.65); background: rgba(255,77,94,0.07); }
   .vb-ok { border-color: rgba(34,197,94,0.65); background: rgba(34,197,94,0.07); }
   .vb-warn { border-color: rgba(251,191,36,0.65); background: rgba(251,191,36,0.07); }
 
   .xai-list { display: flex; flex-direction: column; gap: 6px; }
-  .xai-row { display: grid; grid-template-columns: 1.45fr 1fr 78px; align-items: center; gap: 8px; font-size: 0.78rem; }
+  .xai-row { display: grid; grid-template-columns: 1.45fr 1fr 82px; align-items: center; gap: 8px; font-size: 0.82rem; }
   .bar-track { height: 8px; background: #162238; border-radius: 99px; overflow: hidden; }
   .bar-fill { height: 100%; border-radius: 99px; transition: width 0.25s ease; }
   .code-preview {
@@ -1190,6 +1191,51 @@ HTML_PAGE = r"""<!DOCTYPE html>
   .pill-btn:hover { transform: translateY(-1px); border-color: var(--cyan); }
   .pill-sound-on { color: #fef08a; border-color: var(--amber); background: rgba(251,191,36,0.16); }
   .pill-sound-off { color: var(--muted); }
+  .pill-theory-on {
+    color: #f5d0fe; border-color: var(--purple); background: rgba(168,85,247,0.22);
+    box-shadow: 0 0 14px rgba(168,85,247,0.38);
+  }
+  .theory-drawer {
+    display: none;
+    background: linear-gradient(180deg, rgba(14,22,38,0.98), rgba(9,15,28,0.98));
+    border: 1px solid rgba(168,85,247,0.58);
+    border-radius: 12px;
+    padding: 14px 16px 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 12px 34px rgba(0,0,0,0.55), 0 0 24px rgba(168,85,247,0.14);
+  }
+  .theory-drawer.open { display: block; animation: fadeSlideIn 0.18s ease-out; }
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .theory-head {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+    border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .theory-head h2 { font-size: 1.02rem; color: #f5d0fe; letter-spacing: 0.2px; }
+  .theory-theme { font-size: 0.84rem; color: #dbeafe; margin-top: 3px; line-height: 1.4; }
+  .theory-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .t-card {
+    background: #080e1a; border: 1px solid #223454; border-left-width: 4px;
+    border-radius: 10px; padding: 12px 14px;
+    display: flex; flex-direction: column; justify-content: space-between; gap: 9px;
+  }
+  .t-card h3 { font-size: 0.92rem; font-weight: 800; line-height: 1.3; }
+  .t-card p { font-size: 0.85rem; color: #dce8fc; line-height: 1.46; }
+  .t-card .t-formula {
+    font-family: var(--mono); font-size: 0.77rem; color: #bae6fd;
+    background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.22);
+    border-radius: 6px; padding: 5px 9px;
+  }
+  .t-card .t-actions { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .t-card-red { border-left-color: var(--red); }
+  .t-card-cyan { border-left-color: var(--cyan); }
+  .t-card-purple { border-left-color: var(--purple); }
+  .t-card-green { border-left-color: var(--green); }
+  @media (max-width: 960px) {
+    .theory-grid { grid-template-columns: 1fr; }
+  }
   .btn-diff {
     border: 1px solid rgba(56,189,248,0.55); border-radius: 8px; padding: 6px 11px;
     background: linear-gradient(135deg, #0d2b45, #091d30); color: #bae6fd;
@@ -1263,12 +1309,95 @@ HTML_PAGE = r"""<!DOCTYPE html>
       </div>
     </div>
     <div class="status-pills">
+      <button class="pill pill-btn" id="btnTheory" onclick="toggleTheoryDrawer()" aria-expanded="false" title="Atalho: tecla T">📖 [T] Guia Teórico</button>
       <button class="pill pill-btn pill-sound-off" id="btnSound" onclick="toggleSound()" title="Atalho: tecla M">🔇 [M] Som: OFF</button>
       <button class="pill pill-btn" id="btnFull" onclick="toggleFullscreen()" title="Atalho: tecla F">⛶ [F] Tela Cheia</button>
       <span class="pill pill-online" id="pillServer">● LOCALHOST ONLINE</span>
       <span class="pill pill-shield-on" id="pillShield">🧠 ESCUDO IA: LIGADO</span>
     </div>
   </header>
+
+  <section class="theory-drawer" id="theoryDrawer" aria-label="Guia Teórico da Apresentação">
+    <div class="theory-head">
+      <div>
+        <h2>📖 GUIA TEÓRICO INTEGRADO — APRESENTAÇÃO UNIVERSITÁRIA (ATAQUE vs. DEFESA)</h2>
+        <p class="theory-theme">
+          <strong>Tema:</strong> <em>"IA na Cibersegurança (Ataque vs. Defesa): Como cibercriminosos usam inteligência artificial para criar malwares polimórficos e como analistas usam a mesma tecnologia para detectar invasões em tempo real."</em>
+        </p>
+      </div>
+      <button class="btn-diff" onclick="toggleTheoryDrawer()">✕ Fechar Guia [T / ESC]</button>
+    </div>
+
+    <div class="theory-grid">
+      <article class="t-card t-card-red">
+        <div>
+          <h3 class="c-red">A) IA Ofensiva, Polimorfismo &amp; Efeito Avalanche (SHA-256)</h3>
+          <p>
+            Antivírus tradicionais bloqueiam ameaças comparando assinaturas fixas (hashes criptográficos como <strong>SHA-256</strong>).
+            Motores polimórficos e <strong>LLMs generativos</strong> reescrevem código sob demanda (renomeação, <em>junk code</em>,
+            <code>for→while</code> na AST e chaves XOR/Base85). Pelo <strong>Efeito Avalanche</strong>, alterar 1 único bit gera um hash
+            100% inédito, derrubando a detecção estática para <strong>0%</strong> mantendo o mesmo comportamento.
+          </p>
+        </div>
+        <div class="t-formula">SHA-256(original) ≠ SHA-256(variante)  →  Blacklist cega (BYPASS 100%)</div>
+        <div class="t-actions">
+          <span style="font-size:0.74rem;color:var(--muted);">Demonstre lado a lado no Canvas:</span>
+          <button class="btn-diff" onclick="demoCardA()">▶ Testar [1] Original vs. [2] Polimórfico</button>
+        </div>
+      </article>
+
+      <article class="t-card t-card-cyan">
+        <div>
+          <h3 class="c-cyan">B) IA Defensiva: Entropia de Shannon, AST &amp; Comportamento Real</h3>
+          <p>
+            Em vez de perguntar <em>"já vi esse hash?"</em>, o Blue Team analisa <strong>sinais matemáticos e comportamentais</strong>:
+            a <strong>Entropia de Shannon</strong> mede aleatoriedade dos bytes (código legível ~4.5 vs. ofuscado/cifrado &gt;6.0),
+            a inspeção da <strong>AST Python</strong> detecta predicados opacos e <code>exec()</code>, e sensores reais de SO
+            (<code>watchdog</code>, <code>psutil</code> e loopback <code>127.0.0.1</code>) capturam escrita em disco e rede em tempo real.
+          </p>
+        </div>
+        <div class="t-formula">H(X) = -Σ p(x)·log₂(p(x))  +  Nós AST  +  I/O Sandbox  +  TCP Loopback</div>
+        <div class="t-actions">
+          <span style="font-size:0.74rem;color:var(--muted);">Inspecione o código real reescrito:</span>
+          <button class="btn-diff" onclick="openCodeDiffModal()">🔬 Abrir Diff AST Real [C]</button>
+        </div>
+      </article>
+
+      <article class="t-card t-card-purple">
+        <div>
+          <h3 class="c-purple">C) Ensemble Híbrido: Random Forest + Isolation Forest (Zero-Day)</h3>
+          <p>
+            Combinamos dois paradigmas de Machine Learning em milissegundos: o <strong>Random Forest (Supervisionado)</strong>
+            classifica padrões conhecidos com alta precisão e gera <strong>Explicabilidade (XAI)</strong> mostrando quais features
+            pesaram; já o <strong>Isolation Forest (Não Supervisionado)</strong> aprende apenas o perfil normal e dispara alerta
+            para <strong>ameaças inéditas (Zero-Day / AST furtivo de baixa entropia)</strong> fora da linha de base.
+          </p>
+        </div>
+        <div class="t-formula">Decisão = RandomForest(supervisionado + XAI) ∪ IsolationForest(anomalia zero-day)</div>
+        <div class="t-actions">
+          <span style="font-size:0.74rem;color:var(--muted);">Teste resiliência sob carga real:</span>
+          <button class="btn-diff" onclick="fireStressWave()">⚡ Lançar Onda x8 [7]</button>
+        </div>
+      </article>
+
+      <article class="t-card t-card-green">
+        <div>
+          <h3 class="c-green">D) Como Evitamos Falsos Positivos em Compactados Legítimos</h3>
+          <p>
+            Se um IDS bloqueasse qualquer arquivo com alta entropia, travaria a empresa bloqueando <code>.zip</code>, vídeos e
+            instaladores legítimos (<em>alert fatigue</em>). Por isso treinamos com <strong>negativos difíceis</strong> e cruzamos
+            entropia com estrutura AST, ofuscação e comportamento limpo: o <code>instalador_compactado.pkg</code> (blob
+            <code>zlib</code> real com <strong>H ≈ 7.9 bits/B</strong>) obtém <strong>risco ≈ 0%</strong> e passa livre!
+          </p>
+        </div>
+        <div class="t-formula">Alta Entropia (7.93) + AST Limpa + 0 Rede Suspeita  →  RF ≈ 0% (0 Falsos Positivos)</div>
+        <div class="t-actions">
+          <span style="font-size:0.74rem;color:var(--muted);">Comprove ao vivo com tráfego misto:</span>
+          <button class="btn-diff" onclick="fireMixed()">🌊 Provar 0 FP ([3] Misto)</button>
+        </div>
+      </article>
+    </div>
+  </section>
 
   <section class="kpi-row">
     <div class="kpi">
@@ -1306,7 +1435,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <span><i class="dot" style="background:var(--green)"></i>Tráfego Legítimo</span>
         <span><i class="dot" style="background:var(--cyan)"></i>Interceptação Neural IA</span>
       </div>
-      <span style="font-family:var(--mono);font-size:0.75rem;color:var(--muted);">Atalhos: [1]–[5] Ações • [6] Vel • [7] Onda x8 • [C] Diff • [F] Tela Cheia • [M] Som</span>
+      <span style="font-family:var(--mono);font-size:0.76rem;color:var(--muted);">Atalhos: [1]–[5] Ações • [6] Vel • [7] Onda x8 • [T] Teoria • [C] Diff • [F] Tela Cheia • [M] Som</span>
     </div>
     <canvas id="arenaCanvas" width="1280" height="400"></canvas>
 
@@ -2462,17 +2591,44 @@ async function resetArena() {
   renderUI(data);
 }
 
+function toggleTheoryDrawer() {
+  const drawer = document.getElementById("theoryDrawer");
+  const btn = document.getElementById("btnTheory");
+  const isOpen = drawer.classList.toggle("open");
+  btn.setAttribute("aria-expanded", String(isOpen));
+  if (isOpen) {
+    btn.className = "pill pill-btn pill-theory-on";
+    btn.textContent = "✕ [T] Fechar Guia";
+  } else {
+    btn.className = "pill pill-btn";
+    btn.textContent = "📖 [T] Guia Teórico";
+  }
+  playSound("toggle");
+}
+
+async function demoCardA() {
+  await fireOriginal();
+  setTimeout(() => { firePolymorphic(); }, 650);
+}
+
 document.addEventListener("keydown", (e) => {
   if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
   const k = e.key.toLowerCase();
-  if (k === "escape") closeCodeDiffModal();
-  else if (k === "1") fireOriginal();
+  if (k === "escape") {
+    const modal = document.getElementById("codeModal");
+    if (modal.classList.contains("open")) {
+      closeCodeDiffModal();
+    } else if (document.getElementById("theoryDrawer").classList.contains("open")) {
+      toggleTheoryDrawer();
+    }
+  } else if (k === "1") fireOriginal();
   else if (k === "2") firePolymorphic();
   else if (k === "3") fireMixed();
   else if (k === "4") toggleAI();
   else if (k === "5") resetArena();
   else if (k === "6") toggleSlowMo();
   else if (k === "7") fireStressWave();
+  else if (k === "t") toggleTheoryDrawer();
   else if (k === "f") toggleFullscreen();
   else if (k === "m") toggleSound();
   else if (k === "c") openCodeDiffModal();
@@ -2657,7 +2813,7 @@ def main() -> None:
             "[white]Motor Defensivo:[/white]  [cyan]RandomForestClassifier + IsolationForest (scikit-learn, 6 features reais)[/cyan]\n"
             "[white]Endpoints REST:[/white]   [dim]/api/state • /api/spawn-original • /api/spawn-polymorphic • "
             "/api/spawn-mixed • /api/spawn-stress • /api/toggle-ai • /api/reset[/dim]\n"
-            "[white]Atalhos na Tela:[/white]  [yellow][1] Original  [2] Polimórfico  [3] Misto  [4] IA  [5] Reset  [6] Vel 1x/0.4x  [7] Onda x8[/yellow]\n\n"
+            "[white]Atalhos na Tela:[/white]  [yellow][1] Original  [2] Polimórfico  [3] Misto  [4] IA  [5] Reset  [6] Vel  [7] Onda x8  [T] Teoria  [C] Diff  [F] Tela Cheia  [M] Som[/yellow]\n\n"
             "[bold yellow]Pressione Ctrl+C neste terminal para encerrar o servidor com segurança.[/bold yellow]",
             title="[bold white]Servidor Localhost Embutido (Zero Node/npm | Zero Mock)[/bold white]",
             border_style="cyan",

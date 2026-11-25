@@ -117,7 +117,7 @@ python3 apresentar.py
 ### Coreografia Ao Vivo no Navegador
 1. **(34–36 min) Abertura e Preparação Visual:**
    - No terminal, pressione **`[8]`** → o navegador abre automaticamente em `http://127.0.0.1:8080` (fallback `8081`).
-   - Pressione **`[F]`** para ativar **Tela Cheia no Projetor** (e opcionalmente **`[M]`** se quiser ligar os bips táticos sintetizados via Web Audio API).
+   - Pressione **`[F]`** para ativar **Tela Cheia no Projetor**, **`[T]`** sempre que quiser abrir a gaveta do **Guia Teórico da Apresentação** (4 cartões didáticos com botões de disparo integrados) e opcionalmente **`[M]`** para ativar os bips táticos via Web Audio API.
    - Aponte as 3 zonas do Canvas: **Fábrica Polimórfica (Esquerda)** → **Muralha Legada SHA-256 (Centro)** → **Escudo Neural IA + Servidor (`HP 100%`) + Cofre de Quarentena (Direita)**.
 2. **(36–40 min) Passo a Passo em Câmera Lenta (`[6]` → `0.4x`):**
    - Ative **`[6]` Câmera Lenta (`0.4x`)**.
