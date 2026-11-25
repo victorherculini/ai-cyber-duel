@@ -1,0 +1,28 @@
+# Ambientes Virtuais Python
+venv/
+.venv/
+env/
+ENV/
+
+# Cache e artefatos Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Artefatos temporários gerados durante a demonstração ao vivo
+generated_variants/
+**/generated_variants/
+02-blue-team-realtime-ids/telemetry_dataset.csv
+
+# Arquivos de sistema operacional e editores
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+*.swp
+*.swo
