@@ -97,7 +97,8 @@ ai-cyber-duel/
 ├── README.md                              # Guia visual da apresentação (esta página)
 ├── apresentar.py                          # Menu interativo de 1 tecla para apresentação ao vivo no projetor
 ├── arena_duel_live.py                     # Arena ao vivo (Split-Screen): AST + Watchdog + Psutil + Ensemble IA
-├── requirements.txt                       # Dependências Python (rich, scikit-learn, numpy, pandas, psutil, watchdog)
+├── visual_analytics.py                    # Gráficos Rich no terminal + exportação Dark Mode SOC (dashboard_soc.png)
+├── requirements.txt                       # Dependências Python (rich, scikit-learn, numpy, pandas, psutil, watchdog, matplotlib)
 ├── .gitignore                             # Ignora venv, cache, sandbox, quarentena e artefatos temporários
 ├── .devcontainer/
 │   └── devcontainer.json                  # Fallback 1-clique para GitHub Codespaces
@@ -192,6 +193,7 @@ Teclas disponíveis no menu:
 - `[4]` Motor Avançado de Mutação AST
 - `[5]` Arena Ao Vivo Split-Screen (`watchdog` + `psutil` + Ensemble IA)
 - `[6]` Exibir Relatório Técnico Gerado (`RELATORIO_INCIDENTE_SOC.md`)
+- `[7]` Gráficos Visuais SOC (Terminal em ASCII/Unicode + `dashboard_soc.png`)
 - `[0]` Limpar artefatos temporários e sair
 
 *(Para ensaios rápidos sem pausas internas nos scripts, rode `python3 apresentar.py --auto`.)*
@@ -237,6 +239,12 @@ python3 arena_duel_live.py
 python3 arena_duel_live.py --auto
 ```
 *(Executa 5 ondas de variantes AST em `sandbox_env/`, captura eventos reais de disco com `watchdog`, I/O com `psutil` e pings loopback `127.0.0.1`, classifica com Ensemble `RandomForest + IsolationForest`, isola amostras em `quarantine/` e gera o relatório técnico `RELATORIO_INCIDENTE_SOC.md`.)*
+
+### Passo 7 — Visual Analytics: Gráficos no Terminal + Dashboard PNG Dark Mode SOC
+```bash
+python3 visual_analytics.py
+```
+*(Plota gráficos de barras no terminal comparando Entropia de Shannon, Taxa de Detecção e Importância das Features XAI, além de gerar e abrir `dashboard_soc.png` em alta resolução com Curva ROC + Matriz de Confusão, Distribuição de Entropia e Latência por Onda AST. Use `--no-open` ou `--auto` em ambientes sem interface gráfica.)*
 
 > 💡 **Dica de Apresentação:** Cada script possui pausas interativas (`[Pressione ENTER para continuar...]`) para explicar os resultados no projetor. Para rodar sem pausas durante ensaios rápidos, adicione a flag `--auto` em qualquer comando.
 

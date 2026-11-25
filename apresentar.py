@@ -39,6 +39,7 @@ SANDBOX_DIR = ROOT_DIR / "sandbox_env"
 QUARANTINE_DIR = ROOT_DIR / "quarantine"
 TELEMETRY_CSV = ROOT_DIR / "02-blue-team-realtime-ids" / "telemetry_dataset.csv"
 REPORT_PATH = ROOT_DIR / "RELATORIO_INCIDENTE_SOC.md"
+DASHBOARD_PATH = ROOT_DIR / "dashboard_soc.png"
 
 MENU_SCRIPTS: dict[str, tuple[str, Path, bool]] = {
     "1": (
@@ -66,6 +67,11 @@ MENU_SCRIPTS: dict[str, tuple[str, Path, bool]] = {
         ROOT_DIR / "arena_duel_live.py",
         True,
     ),
+    "7": (
+        "Gráficos Visuais SOC (Terminal + dashboard_soc.png)",
+        ROOT_DIR / "visual_analytics.py",
+        True,
+    ),
 }
 
 TEMP_ARTIFACTS: list[tuple[str, Path]] = [
@@ -74,6 +80,7 @@ TEMP_ARTIFACTS: list[tuple[str, Path]] = [
     ("Quarentena SOAR", QUARANTINE_DIR),
     ("Dataset de telemetria CSV", TELEMETRY_CSV),
     ("Relatório técnico SOC", REPORT_PATH),
+    ("Dashboard gráfico SOC (PNG)", DASHBOARD_PATH),
 ]
 
 
@@ -138,7 +145,8 @@ def render_menu(auto_mode: bool) -> None:
 
     poly_count = len(list(VARIANTS_DIR.glob("variante_*.py"))) if VARIANTS_DIR.exists() else 0
     quarantine_count = len(list(QUARANTINE_DIR.glob("*.py"))) if QUARANTINE_DIR.exists() else 0
-    report_badge = "[bold green]Disponível[/bold green]" if REPORT_PATH.exists() else "[dim]Ainda não gerado[/dim]"
+    report_badge = "[bold green]OK[/bold green]" if REPORT_PATH.exists() else "[dim]Não gerado[/dim]"
+    png_badge = "[bold green]OK[/bold green]" if DASHBOARD_PATH.exists() else "[dim]Não gerado[/dim]"
     mode_badge = "[bold yellow]AUTO (--auto)[/bold yellow]" if auto_mode else "[bold cyan]INTERATIVO[/bold cyan]"
     os_label = f"{platform.system()} | Python {platform.python_version()}"
     res_style = "green" if term_w >= 96 else "yellow"
@@ -148,9 +156,10 @@ def render_menu(auto_mode: bool) -> None:
         Panel.fit(
             "[bold white]⚔ AI CYBER DUEL — CENTRAL DE APRESENTAÇÃO AO VIVO[/bold white]\n"
             f"[dim]{os_label}  •  Terminal: [{res_style}]{term_w}x{term_h}{res_note}[/{res_style}]  •  Modo: {mode_badge}[/dim]\n"
-            f"[white]Variantes Polimórficas:[/white] [cyan]{poly_count}[/cyan]  |  "
+            f"[white]Variantes:[/white] [cyan]{poly_count}[/cyan]  |  "
             f"[white]Quarentena:[/white] [yellow]{quarantine_count}[/yellow]  |  "
-            f"[white]Relatório SOC:[/white] {report_badge}",
+            f"[white]Relatório SOC:[/white] {report_badge}  |  "
+            f"[white]Dashboard PNG:[/white] {png_badge}",
             border_style="blue",
             box=box.DOUBLE,
             padding=(1, 2),
@@ -174,6 +183,7 @@ def render_menu(auto_mode: bool) -> None:
     menu_table.add_row("[4]", "Motor Avançado de Mutação AST", "[red]Red Team (AST)[/red]")
     menu_table.add_row("[5]", "Arena Ao Vivo Split-Screen", "[magenta]Duelo Real SO[/magenta]")
     menu_table.add_row("[6]", "Exibir Relatório Técnico Gerado (RELATORIO_INCIDENTE_SOC.md)", "[green]Relatório SOC[/green]")
+    menu_table.add_row("[7]", "Gráficos Visuais SOC (Terminal + dashboard_soc.png)", "[cyan]Visual Analytics[/cyan]")
     menu_table.add_row("[0]", "Limpar artefatos temporários e sair", "[dim]Limpeza / Sair[/dim]")
 
     console.print()
@@ -277,25 +287,25 @@ def cleanup_artifacts() -> None:
     )
 
 
-def handle_choice(choice: str, auto_mode: bool) -> bool:
-    """Processa uma opção do menu. Retorna False quando deve encerrar o loop."""
+def handle_choice(choice: str, auto_mode: bool) -> tuple[bool, int]:
+    """Processa uma opção do menu. Retorna (continuar_loop, codigo_retorno)."""
     if choice in MENU_SCRIPTS:
-        run_module_script(choice, auto_mode)
+        rc = run_module_script(choice, auto_mode)
         wait_return_to_menu(auto_mode)
-        return True
+        return True, rc
     if choice == "6":
         show_soc_report()
         wait_return_to_menu(auto_mode)
-        return True
+        return True, 0
     if choice == "0":
         cleanup_artifacts()
-        return False
+        return False, 0
 
     console.print(
-        f"\n[bold red]Opção inválida:[/bold red] {choice!r}. Escolha uma tecla de [bold yellow]0[/bold yellow] a [bold yellow]6[/bold yellow]."
+        f"\n[bold red]Opção inválida:[/bold red] {choice!r}. Escolha uma tecla de [bold yellow]0[/bold yellow] a [bold yellow]7[/bold yellow]."
     )
     wait_return_to_menu(auto_mode)
-    return True
+    return True, 1
 
 
 def main() -> None:
@@ -309,20 +319,21 @@ def main() -> None:
     )
     parser.add_argument(
         "--choice",
-        choices=["0", "1", "2", "3", "4", "5", "6"],
+        choices=["0", "1", "2", "3", "4", "5", "6", "7"],
         help="Executa uma única opção do menu e encerra (útil para testes automatizados).",
     )
     args = parser.parse_args()
 
     if args.choice is not None:
-        handle_choice(args.choice, auto_mode=True)
-        return
+        _, rc = handle_choice(args.choice, auto_mode=True)
+        sys.exit(rc)
 
     try:
         while True:
             render_menu(args.auto)
-            choice = read_single_key("\n[bold cyan]Digite a tecla da opção [0-6]:[/bold cyan] ")
-            if not handle_choice(choice, args.auto):
+            choice = read_single_key("\n[bold cyan]Digite a tecla da opção [0-7]:[/bold cyan] ")
+            keep_running, _ = handle_choice(choice, args.auto)
+            if not keep_running:
                 break
     except KeyboardInterrupt:
         console.print("\n\n[yellow]Menu encerrado via Ctrl+C (artefatos preservados).[/yellow]")

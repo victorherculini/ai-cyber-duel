@@ -45,6 +45,7 @@ console = Console()
 def load_red_engine():
     spec = importlib.util.spec_from_file_location("ast_transform_engine", RED_MODULE_PATH)
     mod = importlib.util.module_from_spec(spec)
+    sys.modules["ast_transform_engine"] = mod
     spec.loader.exec_module(mod)
     return mod
 

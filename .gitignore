@@ -20,6 +20,7 @@ generated_variants/
 sandbox_env/
 quarantine/
 RELATORIO_INCIDENTE_SOC.md
+dashboard_soc.png
 02-blue-team-realtime-ids/telemetry_dataset.csv
 
 # Arquivos de sistema operacional e editores
