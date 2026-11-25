@@ -72,6 +72,11 @@ MENU_SCRIPTS: dict[str, tuple[str, Path, bool]] = {
         ROOT_DIR / "visual_analytics.py",
         True,
     ),
+    "8": (
+        "Arena Tática Web no Navegador (localhost:8080)",
+        ROOT_DIR / "web_arena.py",
+        False,
+    ),
 }
 
 TEMP_ARTIFACTS: list[tuple[str, Path]] = [
@@ -184,6 +189,7 @@ def render_menu(auto_mode: bool) -> None:
     menu_table.add_row("[5]", "Arena Ao Vivo Split-Screen", "[magenta]Duelo Real SO[/magenta]")
     menu_table.add_row("[6]", "Exibir Relatório Técnico Gerado (RELATORIO_INCIDENTE_SOC.md)", "[green]Relatório SOC[/green]")
     menu_table.add_row("[7]", "Gráficos Visuais SOC (Terminal + dashboard_soc.png)", "[cyan]Visual Analytics[/cyan]")
+    menu_table.add_row("[8]", "Arena Tática Web no Navegador (localhost:8080)", "[bold cyan]Radar Web SOC[/bold cyan]")
     menu_table.add_row("[0]", "Limpar artefatos temporários e sair", "[dim]Limpeza / Sair[/dim]")
 
     console.print()
@@ -302,7 +308,7 @@ def handle_choice(choice: str, auto_mode: bool) -> tuple[bool, int]:
         return False, 0
 
     console.print(
-        f"\n[bold red]Opção inválida:[/bold red] {choice!r}. Escolha uma tecla de [bold yellow]0[/bold yellow] a [bold yellow]7[/bold yellow]."
+        f"\n[bold red]Opção inválida:[/bold red] {choice!r}. Escolha uma tecla de [bold yellow]0[/bold yellow] a [bold yellow]8[/bold yellow]."
     )
     wait_return_to_menu(auto_mode)
     return True, 1
@@ -319,7 +325,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--choice",
-        choices=["0", "1", "2", "3", "4", "5", "6", "7"],
+        choices=["0", "1", "2", "3", "4", "5", "6", "7", "8"],
         help="Executa uma única opção do menu e encerra (útil para testes automatizados).",
     )
     args = parser.parse_args()
@@ -331,7 +337,7 @@ def main() -> None:
     try:
         while True:
             render_menu(args.auto)
-            choice = read_single_key("\n[bold cyan]Digite a tecla da opção [0-7]:[/bold cyan] ")
+            choice = read_single_key("\n[bold cyan]Digite a tecla da opção [0-8]:[/bold cyan] ")
             keep_running, _ = handle_choice(choice, args.auto)
             if not keep_running:
                 break

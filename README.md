@@ -98,6 +98,7 @@ ai-cyber-duel/
 ├── apresentar.py                          # Menu interativo de 1 tecla para apresentação ao vivo no projetor
 ├── arena_duel_live.py                     # Arena ao vivo (Split-Screen): AST + Watchdog + Psutil + Ensemble IA
 ├── visual_analytics.py                    # Gráficos Rich no terminal + exportação Dark Mode SOC (dashboard_soc.png)
+├── web_arena.py                           # Arena Tática Web em localhost:8080 (Radar SOC animado + API REST nativa)
 ├── requirements.txt                       # Dependências Python (rich, scikit-learn, numpy, pandas, psutil, watchdog, matplotlib)
 ├── .gitignore                             # Ignora venv, cache, sandbox, quarentena e artefatos temporários
 ├── .devcontainer/
@@ -194,6 +195,7 @@ Teclas disponíveis no menu:
 - `[5]` Arena Ao Vivo Split-Screen (`watchdog` + `psutil` + Ensemble IA)
 - `[6]` Exibir Relatório Técnico Gerado (`RELATORIO_INCIDENTE_SOC.md`)
 - `[7]` Gráficos Visuais SOC (Terminal em ASCII/Unicode + `dashboard_soc.png`)
+- `[8]` Arena Tática Web no Navegador (`http://127.0.0.1:8080` — Radar SOC interativo)
 - `[0]` Limpar artefatos temporários e sair
 
 *(Para ensaios rápidos sem pausas internas nos scripts, rode `python3 apresentar.py --auto`.)*
@@ -245,6 +247,12 @@ python3 arena_duel_live.py --auto
 python3 visual_analytics.py
 ```
 *(Plota gráficos de barras no terminal comparando Entropia de Shannon, Taxa de Detecção e Importância das Features XAI, além de gerar e abrir `dashboard_soc.png` em alta resolução com Curva ROC + Matriz de Confusão, Distribuição de Entropia e Latência por Onda AST. Use `--no-open` ou `--auto` em ambientes sem interface gráfica.)*
+
+### Passo 8 — Arena Tática Web em `localhost` (Radar SOC Animado no Navegador)
+```bash
+python3 web_arena.py
+```
+*(Inicia servidor HTTP nativo em `http://127.0.0.1:8080` com fallback automático para `8081`, sem Node.js/npm, e abre o navegador automaticamente. Use os botões ou teclas `1` a `5` na página para disparar pacote original, ataque polimórfico/AST, tráfego misto, ligar/desligar o Escudo IA e resetar a arena. Pressione `Ctrl+C` no terminal para encerrar.)*
 
 > 💡 **Dica de Apresentação:** Cada script possui pausas interativas (`[Pressione ENTER para continuar...]`) para explicar os resultados no projetor. Para rodar sem pausas durante ensaios rápidos, adicione a flag `--auto` em qualquer comando.
 

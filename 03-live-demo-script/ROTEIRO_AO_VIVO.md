@@ -36,6 +36,7 @@
 | **`5`** | Arena Ao Vivo Split-Screen (`Watchdog` + `Psutil` + IA) | `python3 arena_duel_live.py` |
 | **`6`** | Exibir Relatório Técnico (`RELATORIO_INCIDENTE_SOC.md`) | Visualização em Markdown no terminal |
 | **`7`** | Gráficos Visuais SOC (Terminal + `dashboard_soc.png`) | `python3 visual_analytics.py` |
+| **`8`** | Arena Tática Web no Navegador (`localhost:8080`) | `python3 web_arena.py` |
 | **`0`** | Limpar artefatos temporários e sair | Remove arquivos temporários da demo |
 
 ---
@@ -136,14 +137,20 @@ python3 02-blue-team-realtime-ids/train_and_detect_ids.py
 
 ---
 
-## ⚡ Etapa Extra (Opcional / Diferencial) — Mutação AST, Arena Ao Vivo e Visual Analytics
-**⏱️ Tempo:** ~3 a 4 minutos | **📺 Tela:** Menu `python3 apresentar.py` → Teclas **`[4]`**, **`[5]`**, **`[6]`** e **`[7]`**
+## ⚡ Etapa Extra (Opcional / Diferencial) — Mutação AST, Arena Terminal, Visual Analytics e Arena Web SOC
+**⏱️ Tempo:** ~4 a 5 minutos | **📺 Tela:** Menu `python3 apresentar.py` → Teclas **`[4]`**, **`[5]`**, **`[6]`**, **`[7]`** e **`[8]`**
 
 1. Pressione **`[4]`** (`python3 01-red-team-polymorphic/ast_transform_engine.py`) para mostrar reescrita estrutural real via árvore sintática (`ast`): renomeação de funções, embaralhamento de definições, conversão `for → while` e predicados opacos.
 2. Pressione **`[5]`** (`python3 arena_duel_live.py`) para abrir a **Arena Ao Vivo Split-Screen**, executando 5 ondas em `sandbox_env/` com captura real de disco (`watchdog`), I/O (`psutil`), pings TCP loopback (`127.0.0.1:59999`), detecção via Ensemble (`RandomForest + IsolationForest`) e isolamento automático em `quarantine/`.
 3. Pressione **`[6]`** para exibir o relatório técnico **`RELATORIO_INCIDENTE_SOC.md`** renderizado direto no terminal.
 4. Pressione **`[7]`** (`python3 visual_analytics.py`) para projetar os gráficos de barras em Unicode (Entropia vs. Limiar, AV vs. IA e XAI) e abrir automaticamente o dashboard em alta resolução **`dashboard_soc.png`** (Curva ROC + Matriz de Confusão, Distribuição de Entropia e Latência por Onda AST).
-5. Ao encerrar, pressione **`[0]`** para limpar todos os artefatos temporários.
+5. Pressione **`[8]`** (`python3 web_arena.py`) para abrir a **Arena Tática Web SOC** em `http://127.0.0.1:8080` (estilo Tower Defense / Radar no navegador):
+   - Aperte **`1`** (*Pacote Original*) → bloqueado na **Muralha Legada SHA-256**.
+   - Aperte **`2`** (*Ataque Polimórfico*) → atravessa a muralha (bypass) e é interceptado no ar pelo **Escudo Neural IA** para a quarentena.
+   - Aperte **`3`** (*Tráfego Misto*) → mostra o **instalador compactado legítimo** (alta entropia, 0 falsos positivos) passando limpo enquanto os ataques são isolados.
+   - Aperte **`4`** para **desligar o Escudo IA** e depois **`2`** → mostra o ataque causando **BREACH** no servidor sem a defesa de IA; aperte **`4`** novamente para religar a defesa e **`5`** para resetar.
+   - Pressione `Ctrl+C` no terminal para encerrar o servidor e voltar ao menu.
+6. Ao encerrar, pressione **`[0]`** para limpar todos os artefatos temporários.
 
 ---
 
