@@ -113,7 +113,8 @@ ai-cyber-duel/
 │   ├── generate_telemetry_data.py         # Gera dataset sintético de telemetria SO/rede
 │   └── train_and_detect_ids.py            # Treina RandomForest e detecta as variantes ao vivo
 └── 03-live-demo-script/
-    ├── ROTEIRO_AO_VIVO.md                 # Roteiro cronometrado + falas da apresentação
+    ├── PLANO_AULA_60MIN.md                # Roteiro completo cronometrado para apresentação de 1 hora (5 atos)
+    ├── ROTEIRO_AO_VIVO.md                 # Roteiro resumido (30–45 min) + falas da apresentação
     └── PERGUNTAS_PROFESSOR.md             # 5 perguntas técnicas difíceis e respostas diretas
 ```
 
@@ -199,7 +200,7 @@ Teclas disponíveis no menu:
 - `[8]` Arena Tática Web no Navegador (`http://127.0.0.1:8080` — Radar SOC interativo)
 - `[0]` Limpar artefatos temporários e sair
 
-*(Para ensaios rápidos sem pausas internas nos scripts, rode `python3 apresentar.py --auto`.)*
+*(Para ensaios rápidos sem pausas internas nos scripts, rode `python3 apresentar.py --auto`. Para conduzir uma aula/seminário completo de **50 a 60 minutos** dividido em 5 atos, siga o guia [`03-live-demo-script/PLANO_AULA_60MIN.md`](03-live-demo-script/PLANO_AULA_60MIN.md).)*
 
 ---
 
@@ -253,7 +254,7 @@ python3 visual_analytics.py
 ```bash
 python3 web_arena.py
 ```
-*(Inicia servidor HTTP nativo em `http://127.0.0.1:8080` com fallback automático para `8081`, sem Node.js/npm, e abre o navegador automaticamente. Exibe batalha tática neon com trilhas luminosas, partículas, metamorfose visual dos pacotes com `SHA-256` + `Entropia` flutuantes e gráfico de histórico de risco no Canvas. Atalhos na página: `[1]` Original, `[2]` Polimórfico/AST, `[3]` Misto `x4`, `[4]` Escudo IA Ligado/Desligado, `[5]` Reset, `[6]` Câmera Lenta `1.0x / 0.4x` e `[7]` Onda Contínua de Estresse `x8`. Pressione `Ctrl+C` no terminal para encerrar.)*
+*(Inicia servidor HTTP nativo em `http://127.0.0.1:8080` com fallback automático para `8081`, sem Node.js/npm, e abre o navegador automaticamente. Exibe batalha tática neon com barra de **Integridade do Servidor (`HP 100%`)**, trilhas luminosas, partículas, metamorfose visual dos pacotes (`SHA-256` + `Entropia` flutuantes), gráfico de histórico de risco no Canvas e **Modal Diff Lado a Lado (Original vs. Mutado AST)**. Atalhos na página: `[1]` Original, `[2]` Polimórfico/AST, `[3]` Misto `x4`, `[4]` Escudo IA Ligado/Desligado, `[5]` Reset, `[6]` Câmera Lenta `1.0x / 0.4x`, `[7]` Onda Massiva `x8`, `[C]` Diff de Código, `[F]` Tela Cheia e `[M]` Áudio Tático Web Audio API (mutado por padrão). Pressione `Ctrl+C` no terminal para encerrar.)*
 
 > 💡 **Dica de Apresentação:** Cada script possui pausas interativas (`[Pressione ENTER para continuar...]`) para explicar os resultados no projetor. Para rodar sem pausas durante ensaios rápidos, adicione a flag `--auto` em qualquer comando.
 

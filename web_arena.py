@@ -407,6 +407,7 @@ class CyberDuelArenaEngine:
                 "ai_legit_passed": 0,
                 "breaches": 0,
                 "false_positives": 0,
+                "server_hp": 100,
                 "avg_latency_ms": 0.0,
             }
             if WEB_EXEC_DIR.exists():
@@ -586,7 +587,7 @@ class CyberDuelArenaEngine:
             self.stats["total_spawned"] += 1
             self.stats["av_blocked"] += 1
 
-            snippet = "\n".join(self.original_source.strip().splitlines()[:12])
+            snippet = "\n".join(self.original_source.strip().splitlines()[:32])
             packet = {
                 "id": f"PKT-{self.packet_seq:03d}",
                 "timestamp": datetime.now().strftime("%H:%M:%S"),
@@ -595,11 +596,15 @@ class CyberDuelArenaEngine:
                 "technique": "Assinatura Conhecida (Baseline sem mutação)",
                 "mutation_ms": 0.0,
                 "sha256": sha256,
+                "original_sha256": self.original_sha256,
                 "size_bytes": len(raw),
                 "entropy": entropy,
+                "original_entropy": entropy,
                 "ast_nodes": ast_info["ast_nodes"],
+                "original_ast_nodes": ast_info["ast_nodes"],
                 "ast_complexity": ast_info["ast_complexity"],
                 "obfuscation_score": ast_info["obfuscation_score"],
+                "sandbox_file": "01-red-team-polymorphic/generated_variants/payload_original.py",
                 "sandbox_telemetry": {
                     "executed": False,
                     "stdout": "Bloqueado antes da execução",
@@ -620,6 +625,7 @@ class CyberDuelArenaEngine:
                 "outcome": "AV_BLOCKED",
                 "xai_reasons": [],
                 "offensive_ai_note": "Sem mutação automática, o hash SHA-256 permanece fixo e o AV estático bloqueia 100%.",
+                "original_code_preview": snippet,
                 "code_preview": snippet,
             }
             self._record_packet_unlocked(packet)
@@ -728,17 +734,27 @@ class CyberDuelArenaEngine:
                 ai_verdict = "OFFLINE"
                 outcome = "BREACH"
                 self.stats["breaches"] += 1
+                self.stats["server_hp"] = max(0, int(self.stats["server_hp"]) - 20)
                 ai_reason = (
-                    f"ESCUDO IA DESLIGADO! Modelo estimou {risk_pct:.1f}% de risco (RF={ai_res['rf_prob_pct']:.1f}%), "
-                    "mas a contenção está desativada — invasão confirmada!"
+                    f"ESCUDO IA DESLIGADO! Ameaça com {risk_pct:.1f}% de risco (RF={ai_res['rf_prob_pct']:.1f}%) "
+                    f"atingiu o servidor (-20 HP → integridade atual: {self.stats['server_hp']}%)!"
                 )
             else:
                 ai_verdict = "MISSED"
                 outcome = "BREACH"
                 self.stats["breaches"] += 1
+                self.stats["server_hp"] = max(0, int(self.stats["server_hp"]) - 20)
                 ai_reason = f"Score abaixo do limiar ({risk_pct:.1f}%)."
 
-            preview_lines = source.strip().splitlines()[:12]
+            is_ast_mode = label.startswith("ast_")
+            baseline_src = self.ast_mod.WORKLOAD_TEMPLATE.strip() if is_ast_mode else self.original_source.strip()
+            baseline_bytes = baseline_src.encode("utf-8")
+            baseline_sha = hashlib.sha256(baseline_bytes).hexdigest()
+            baseline_ent = compute_shannon_entropy(baseline_bytes)
+            baseline_ast_nodes = analyze_python_ast_and_heuristics(baseline_src)["ast_nodes"]
+
+            preview_lines = source.strip().splitlines()[:42]
+            baseline_preview_lines = baseline_src.splitlines()[:42]
             packet = {
                 "id": f"PKT-{self.packet_seq:03d}",
                 "timestamp": datetime.now().strftime("%H:%M:%S"),
@@ -747,11 +763,15 @@ class CyberDuelArenaEngine:
                 "technique": technique,
                 "mutation_ms": mutation_ms,
                 "sha256": sha256,
+                "original_sha256": baseline_sha,
                 "size_bytes": len(raw),
                 "entropy": entropy,
+                "original_entropy": baseline_ent,
                 "ast_nodes": ast_info["ast_nodes"],
+                "original_ast_nodes": baseline_ast_nodes,
                 "ast_complexity": ast_info["ast_complexity"],
                 "obfuscation_score": ast_info["obfuscation_score"],
+                "sandbox_file": f"sandbox_env/web_exec/{label}",
                 "features_measured": real_features,
                 "sandbox_telemetry": {"executed": True, **sbx},
                 "av_verdict": "BYPASS",
@@ -770,6 +790,7 @@ class CyberDuelArenaEngine:
                 "outcome": outcome,
                 "xai_reasons": ai_res["xai"],
                 "offensive_ai_note": llm_note,
+                "original_code_preview": "\n".join(baseline_preview_lines),
                 "code_preview": "\n".join(preview_lines),
             }
             self._record_packet_unlocked(packet)
@@ -887,11 +908,15 @@ class CyberDuelArenaEngine:
             "technique": technique,
             "mutation_ms": 0.0,
             "sha256": sha256,
+            "original_sha256": sha256,
             "size_bytes": len(raw),
             "entropy": entropy,
+            "original_entropy": entropy,
             "ast_nodes": ast_info["ast_nodes"],
+            "original_ast_nodes": ast_info["ast_nodes"],
             "ast_complexity": ast_info["ast_complexity"],
             "obfuscation_score": ast_info["obfuscation_score"],
+            "sandbox_file": "pacote_binario_em_memoria" if packed_hard_negative else f"sandbox_env/web_exec/legit_{self.packet_seq}.py",
             "features_measured": real_features,
             "sandbox_telemetry": sbx,
             "av_verdict": "PASSED",
@@ -912,6 +937,7 @@ class CyberDuelArenaEngine:
                 if packed_hard_negative
                 else "Script administrativo legítimo de referência para controle de falsos positivos."
             ),
+            "original_code_preview": source_preview,
             "code_preview": source_preview,
         }
         self._record_packet_unlocked(packet)
@@ -1157,6 +1183,65 @@ HTML_PAGE = r"""<!DOCTYPE html>
   .b-legit { background: rgba(56,189,248,0.18); color: #7dd3fc; border: 1px solid rgba(56,189,248,0.55); }
   .b-breach { background: rgba(255,77,94,0.25); color: #fda4af; border: 1px solid var(--red); }
 
+  .pill-btn {
+    cursor: pointer; transition: transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;
+    color: var(--text);
+  }
+  .pill-btn:hover { transform: translateY(-1px); border-color: var(--cyan); }
+  .pill-sound-on { color: #fef08a; border-color: var(--amber); background: rgba(251,191,36,0.16); }
+  .pill-sound-off { color: var(--muted); }
+  .btn-diff {
+    border: 1px solid rgba(56,189,248,0.55); border-radius: 8px; padding: 6px 11px;
+    background: linear-gradient(135deg, #0d2b45, #091d30); color: #bae6fd;
+    font-family: var(--mono); font-size: 0.74rem; font-weight: 700; cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.15s ease;
+  }
+  .btn-diff:hover { transform: translateY(-1px); box-shadow: 0 0 14px rgba(56,189,248,0.35); }
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(2, 6, 14, 0.84);
+    backdrop-filter: blur(5px); z-index: 999;
+    display: none; align-items: center; justify-content: center; padding: 18px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal-box {
+    width: min(1240px, 96vw); max-height: 90vh;
+    background: #0b1220; border: 1px solid var(--cyan); border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.75), 0 0 32px rgba(56,189,248,0.22);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .modal-head {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 13px 18px; background: #101b30; border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .modal-head h3 { font-size: 1rem; color: #e0f2fe; }
+  .modal-meta {
+    display: flex; flex-wrap: wrap; gap: 10px; padding: 9px 18px;
+    background: #080e1a; border-bottom: 1px solid var(--border);
+    font-family: var(--mono); font-size: 0.76rem; color: #cbd5e1;
+  }
+  .diff-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    padding: 14px 18px 18px; overflow-y: auto;
+  }
+  .diff-col {
+    background: #050912; border: 1px solid #1d2d48; border-radius: 10px;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .diff-col-head {
+    padding: 8px 12px; font-family: var(--mono); font-size: 0.76rem; font-weight: 800;
+    border-bottom: 1px solid #1d2d48; display: flex; justify-content: space-between; gap: 8px;
+  }
+  .diff-orig { background: rgba(34,197,94,0.12); color: #86efac; }
+  .diff-mut { background: rgba(255,77,94,0.14); color: #fda4af; }
+  .diff-pre {
+    padding: 12px; font-family: var(--mono); font-size: 0.76rem; line-height: 1.45;
+    color: #dbeafe; overflow: auto; max-height: 58vh; white-space: pre;
+  }
+  @media (max-width: 900px) {
+    .diff-grid { grid-template-columns: 1fr; }
+  }
+
   @media (max-width: 1220px) {
     .controls { grid-template-columns: repeat(4, 1fr); }
   }
@@ -1178,7 +1263,8 @@ HTML_PAGE = r"""<!DOCTYPE html>
       </div>
     </div>
     <div class="status-pills">
-      <span class="pill pill-ml">⚙ BACKEND ML + AST REAL (ZERO MOCK)</span>
+      <button class="pill pill-btn pill-sound-off" id="btnSound" onclick="toggleSound()" title="Atalho: tecla M">🔇 [M] Som: OFF</button>
+      <button class="pill pill-btn" id="btnFull" onclick="toggleFullscreen()" title="Atalho: tecla F">⛶ [F] Tela Cheia</button>
       <span class="pill pill-online" id="pillServer">● LOCALHOST ONLINE</span>
       <span class="pill pill-shield-on" id="pillShield">🧠 ESCUDO IA: LIGADO</span>
     </div>
@@ -1198,17 +1284,17 @@ HTML_PAGE = r"""<!DOCTYPE html>
     <div class="kpi">
       <span class="k-label">Interceptadas pela IA</span>
       <span class="k-val c-green" id="statIntercepted">0</span>
-      <span class="k-sub">Isoladas na quarentena</span>
+      <span class="k-sub" id="statLegitSub">Legítimos: 0 (0 FP)</span>
     </div>
     <div class="kpi">
-      <span class="k-label">Legítimos / Invasões</span>
-      <span class="k-val"><span class="c-cyan" id="statLegit">0</span> <span style="color:#475569">/</span> <span class="c-red" id="statBreach">0</span></span>
-      <span class="k-sub" id="statFpSub">Falsos positivos: 0</span>
+      <span class="k-label">Integridade Servidor</span>
+      <span class="k-val c-green" id="statServerHp">100%</span>
+      <span class="k-sub" id="statBreachSub">Invasões (Breach): 0</span>
     </div>
     <div class="kpi">
       <span class="k-label">Latência Média IA</span>
       <span class="k-val c-cyan" id="statLatency">0.00 ms</span>
-      <span class="k-sub">Inferência real scikit-learn</span>
+      <span class="k-sub">RandomForest + IsoForest</span>
     </div>
   </section>
 
@@ -1220,7 +1306,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <span><i class="dot" style="background:var(--green)"></i>Tráfego Legítimo</span>
         <span><i class="dot" style="background:var(--cyan)"></i>Interceptação Neural IA</span>
       </div>
-      <span style="font-family:var(--mono);font-size:0.76rem;color:var(--muted);">Atalhos no teclado: [1]–[5] Ações • [6] Câmera Lenta • [7] Onda Massiva (x8)</span>
+      <span style="font-family:var(--mono);font-size:0.75rem;color:var(--muted);">Atalhos: [1]–[5] Ações • [6] Vel • [7] Onda x8 • [C] Diff • [F] Tela Cheia • [M] Som</span>
     </div>
     <canvas id="arenaCanvas" width="1280" height="400"></canvas>
 
@@ -1253,7 +1339,10 @@ HTML_PAGE = r"""<!DOCTYPE html>
     <div class="card">
       <div class="card-title">
         <span>🔍 Painel de Inspeção — Telemetria Real &amp; IA Explicável (XAI)</span>
-        <span class="pill" id="inspBadge" style="font-size:0.72rem;">Aguardando disparo...</span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn-diff" id="btnDiff" onclick="openCodeDiffModal()" title="Atalho: tecla C">🔬 [C] Diff Código (Original vs. Mutado)</button>
+          <span class="pill" id="inspBadge" style="font-size:0.72rem;">Aguardando disparo...</span>
+        </div>
       </div>
 
       <div class="inspector-meta">
@@ -1300,7 +1389,7 @@ HTML_PAGE = r"""<!DOCTYPE html>
     <div class="card">
       <div class="card-title">
         <span>📡 Feed de Eventos SOC &amp; Quarentena</span>
-        <span style="font-family:var(--mono);font-size:0.75rem;color:var(--muted);" id="quarCount">Quarentena: 0</span>
+        <span style="font-family:var(--mono);font-size:0.75rem;color:var(--muted);" id="quarCount">Quarentena: 0 (clique p/ Diff)</span>
       </div>
       <div class="feed-list" id="feedList">
         <div style="color:var(--muted);font-size:0.84rem;padding:12px;">
@@ -1309,6 +1398,32 @@ HTML_PAGE = r"""<!DOCTYPE html>
       </div>
     </div>
   </section>
+
+  <div class="modal-backdrop" id="codeModal" onclick="if(event.target===this) closeCodeDiffModal()">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="modalTitle">🔬 Comparação de Código Real — Original vs. Mutação AST / Polimórfica</h3>
+        <button class="btn-diff" onclick="closeCodeDiffModal()">✕ Fechar [ESC]</button>
+      </div>
+      <div class="modal-meta" id="modalMeta">Selecione um pacote no feed para inspecionar o código gerado em disco.</div>
+      <div class="diff-grid">
+        <div class="diff-col">
+          <div class="diff-col-head diff-orig">
+            <span>📄 CÓDIGO ORIGINAL (BASELINE)</span>
+            <span id="modalOrigHash">SHA: —</span>
+          </div>
+          <pre class="diff-pre" id="modalOrigCode"></pre>
+        </div>
+        <div class="diff-col">
+          <div class="diff-col-head diff-mut">
+            <span id="modalMutLabel">🧬 CÓDIGO REAL MUTADO (AST / OFUSCAÇÃO)</span>
+            <span id="modalMutHash">SHA: —</span>
+          </div>
+          <pre class="diff-pre" id="modalMutCode"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
 
 <script>
 const canvas = document.getElementById("arenaCanvas");
@@ -1319,7 +1434,7 @@ let arenaState = {
   stats: {
     total_spawned: 0, mutated_count: 0, legit_count: 0,
     av_blocked: 0, av_bypassed: 0, ai_intercepted: 0,
-    ai_legit_passed: 0, breaches: 0, false_positives: 0, avg_latency_ms: 0
+    ai_legit_passed: 0, breaches: 0, false_positives: 0, server_hp: 100, avg_latency_ms: 0
   },
   events: [],
   quarantine: [],
@@ -1336,12 +1451,117 @@ let scanlineX = 0;
 let simSpeed = 1.0;
 let screenShake = 0;
 let quarPulse = 0;
+let displayedHp = 100;
+let soundEnabled = false;
+let audioCtx = null;
 let stressBusy = false;
 let lastMutatedHash = "AGUARDANDO MUTAÇÃO...";
 let lastMutatedEntropy = "0.00 bits/B";
 let coreAlertFlash = 0;
 let avWallFlash = 0;
 let avWallColor = "#fbbf24";
+
+function ensureAudio() {
+  if (!audioCtx) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (Ctx) audioCtx = new Ctx();
+  }
+  if (audioCtx && audioCtx.state === "suspended") {
+    audioCtx.resume().catch(() => {});
+  }
+  return audioCtx;
+}
+
+function playSound(kind) {
+  if (!soundEnabled) return;
+  const ac = ensureAudio();
+  if (!ac) return;
+  const now = ac.currentTime;
+  const osc = ac.createOscillator();
+  const gain = ac.createGain();
+  osc.connect(gain);
+  gain.connect(ac.destination);
+
+  if (kind === "av_block") {
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(340, now);
+    osc.frequency.exponentialRampToValueAtTime(160, now + 0.12);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+    osc.start(now); osc.stop(now + 0.15);
+  } else if (kind === "av_bypass") {
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(280, now);
+    osc.frequency.exponentialRampToValueAtTime(140, now + 0.1);
+    gain.gain.setValueAtTime(0.045, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.11);
+    osc.start(now); osc.stop(now + 0.12);
+  } else if (kind === "ai_intercept") {
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(760, now);
+    osc.frequency.exponentialRampToValueAtTime(1240, now + 0.09);
+    gain.gain.setValueAtTime(0.07, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+    osc.start(now); osc.stop(now + 0.15);
+  } else if (kind === "quarantine") {
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(520, now);
+    osc.frequency.setValueAtTime(780, now + 0.05);
+    gain.gain.setValueAtTime(0.05, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+    osc.start(now); osc.stop(now + 0.15);
+  } else if (kind === "legit_ok") {
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(620, now);
+    gain.gain.setValueAtTime(0.04, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.start(now); osc.stop(now + 0.09);
+  } else if (kind === "breach") {
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(210, now);
+    osc.frequency.setValueAtTime(150, now + 0.11);
+    osc.frequency.setValueAtTime(210, now + 0.22);
+    gain.gain.setValueAtTime(0.095, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.34);
+    osc.start(now); osc.stop(now + 0.35);
+  } else {
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(480, now);
+    gain.gain.setValueAtTime(0.04, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+    osc.start(now); osc.stop(now + 0.08);
+  }
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  const btn = document.getElementById("btnSound");
+  if (soundEnabled) {
+    ensureAudio();
+    btn.className = "pill pill-btn pill-sound-on";
+    btn.textContent = "🔊 [M] Som: ON";
+    playSound("toggle");
+  } else {
+    btn.className = "pill pill-btn pill-sound-off";
+    btn.textContent = "🔇 [M] Som: OFF";
+  }
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+
+document.addEventListener("fullscreenchange", () => {
+  const btn = document.getElementById("btnFull");
+  if (btn) {
+    btn.textContent = document.fullscreenElement ? "✕ [F] Sair Tela Cheia" : "⛶ [F] Tela Cheia";
+  }
+  setTimeout(resizeCanvas, 80);
+});
 
 const CANVAS_H = 400;
 
@@ -1707,21 +1927,39 @@ function updateAndDraw() {
   ctx.fillStyle = "#8ea3c2"; ctx.font = "10.5px monospace";
   ctx.fillText("RandomForest + IsoForest", g.radarX, 39);
 
-  // Núcleo Protegido (Servidor)
+  // Núcleo Protegido (Servidor) + Barra de Integridade (HP 100%)
+  const targetHp = Number(arenaState.stats.server_hp ?? 100);
+  displayedHp += (targetHp - displayedHp) * 0.12;
+  if (Math.abs(displayedHp - targetHp) < 0.25) displayedHp = targetHp;
+  const hpPct = Math.max(0, Math.min(100, displayedHp));
+  const hpColor = hpPct > 60 ? "#22c55e" : hpPct > 30 ? "#fbbf24" : "#ff4d5e";
+
   if (coreAlertFlash > 0) coreAlertFlash = Math.max(0, coreAlertFlash - 0.035 * simSpeed);
   ctx.save();
-  ctx.shadowColor = coreAlertFlash > 0 ? "#ff4d5e" : "#22c55e";
-  ctx.shadowBlur = coreAlertFlash > 0 ? 22 : 10;
-  ctx.fillStyle = coreAlertFlash > 0 ? "rgba(255,77,94,0.38)" : "#0d2236";
-  ctx.strokeStyle = coreAlertFlash > 0 ? "#ff4d5e" : "#22c55e";
+  ctx.shadowColor = coreAlertFlash > 0 ? "#ff4d5e" : hpColor;
+  ctx.shadowBlur = coreAlertFlash > 0 ? 24 : 11;
+  ctx.fillStyle = coreAlertFlash > 0 ? "rgba(255,77,94,0.38)" : hpPct <= 40 ? "rgba(69,10,20,0.75)" : "#0d2236";
+  ctx.strokeStyle = coreAlertFlash > 0 ? "#ff4d5e" : hpColor;
   ctx.lineWidth = 2.2;
-  drawRoundedRect(g.coreX - 42, g.coreY - 28, 84, 56, 10);
+  drawRoundedRect(g.coreX - 46, g.coreY - 34, 92, 68, 10);
   ctx.fill(); ctx.stroke();
   ctx.shadowBlur = 0;
-  ctx.fillStyle = "#fff"; ctx.font = "bold 18px sans-serif"; ctx.textAlign = "center";
-  ctx.fillText("🖥️", g.coreX, g.coreY - 2);
-  ctx.fillStyle = coreAlertFlash > 0 ? "#fecdd3" : "#86efac"; ctx.font = "bold 10px monospace";
-  ctx.fillText("SERVIDOR", g.coreX, g.coreY + 17);
+  ctx.fillStyle = "#fff"; ctx.font = "bold 17px sans-serif"; ctx.textAlign = "center";
+  ctx.fillText(hpPct <= 0 ? "💥" : "🖥️", g.coreX, g.coreY - 10);
+  ctx.fillStyle = coreAlertFlash > 0 ? "#fecdd3" : "#e2e8f0"; ctx.font = "bold 9.5px monospace";
+  ctx.fillText(hpPct <= 0 ? "COMPROMETIDO" : `SERVIDOR HP ${Math.round(hpPct)}%`, g.coreX, g.coreY + 7);
+  // Barra de HP integrada
+  const barW = 74, barH = 8, barX = g.coreX - barW / 2, barY = g.coreY + 14;
+  ctx.fillStyle = "#060b14";
+  drawRoundedRect(barX, barY, barW, barH, 4);
+  ctx.fill();
+  if (hpPct > 0) {
+    ctx.fillStyle = hpColor;
+    ctx.shadowColor = hpColor; ctx.shadowBlur = 8;
+    drawRoundedRect(barX, barY, Math.max(4, (barW * hpPct) / 100), barH, 4);
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
   ctx.restore();
 
   // Cofre de Quarentena (pulsa quando neutraliza ameaça)
@@ -1753,6 +1991,7 @@ function updateAndDraw() {
       if (p.x >= g.avX - 8) {
         if (p.packet.outcome === "AV_BLOCKED") {
           avWallFlash = 1.0; avWallColor = "#22c55e";
+          playSound("av_block");
           addShockwave(g.avX, p.y, "#22c55e");
           addParticleBurst(g.avX, p.y, "#fbbf24", 24, 3.6);
           addFloatText(g.avX, p.y - 18, "✔ AV BLOQUEOU (SHA-256)", "#86efac");
@@ -1761,6 +2000,7 @@ function updateAndDraw() {
         } else {
           if (p.packet.kind === "polymorphic") {
             avWallFlash = 1.0; avWallColor = "#ff4d5e";
+            playSound("av_bypass");
             addRipple(g.avX, p.y, "#ff4d5e", 34);
             addParticleBurst(g.avX, p.y, "#ff4d5e", 14, 2.8);
             addFloatText(g.avX, p.y - 18, "✖ BYPASS AV (HASH INÉDITO)", "#fda4af");
@@ -1775,6 +2015,7 @@ function updateAndDraw() {
       if (!p.scannedAi && (distRadar < g.radarR * 0.94 || p.x >= g.radarX - 18)) {
         p.scannedAi = true;
         if (p.packet.outcome === "AI_QUARANTINED") {
+          playSound("ai_intercept");
           addBeam(g.radarX, g.radarY, p.x, p.y, "#38bdf8");
           addShockwave(p.x, p.y, "#38bdf8");
           addParticleBurst(p.x, p.y, "#38bdf8", 22, 3.5);
@@ -1782,6 +2023,7 @@ function updateAndDraw() {
           p.stage = "to_quarantine";
         } else if (p.packet.outcome === "LEGIT_PASSED") {
           if (p.packet.ai_enabled_at_arrival) {
+            playSound("legit_ok");
             addBeam(g.radarX, g.radarY, p.x, p.y, "#22c55e");
             addRipple(p.x, p.y, "#22c55e", 34);
             addFloatText(p.x, p.y - 18, p.packet.kind === "legit_packed" ? "✔ ALTA ENTROPIA, 0 FP!" : "✔ LEGÍTIMO OK", "#86efac");
@@ -1797,6 +2039,7 @@ function updateAndDraw() {
       p.y += (g.quarY - p.y) * 0.11 * simSpeed;
       if (Math.hypot(p.x - g.quarX, p.y - g.quarY) < 14) {
         quarPulse = 1.0;
+        playSound("quarantine");
         addShockwave(g.quarX, g.quarY, "#c084fc");
         addParticleBurst(g.quarX, g.quarY, "#d946ef", 30, 4.4);
         addParticleBurst(g.quarX, g.quarY, "#38bdf8", 12, 3.0);
@@ -1810,9 +2053,10 @@ function updateAndDraw() {
         if (p.packet.outcome === "BREACH") {
           coreAlertFlash = 1.0;
           screenShake = 1.0;
+          playSound("breach");
           addShockwave(g.coreX, g.coreY, "#ff4d5e");
           addParticleBurst(g.coreX, g.coreY, "#ff4d5e", 34, 4.8);
-          addFloatText(g.coreX - 36, g.coreY - 34, "🚨 BREACH NO SERVIDOR!", "#ff4d5e");
+          addFloatText(g.coreX - 38, g.coreY - 40, "🚨 -20 HP • BREACH!", "#ff4d5e");
         } else {
           addRipple(g.coreX, g.coreY, "#22c55e", 34);
           addParticleBurst(g.coreX, g.coreY, "#22c55e", 14, 2.5);
@@ -2046,15 +2290,18 @@ function renderInspector(packet) {
 function renderUI(state) {
   arenaState = state;
   const s = state.stats;
+  const hp = Number(s.server_hp ?? 100);
   document.getElementById("statMutated").textContent = s.mutated_count;
   document.getElementById("statBypass").textContent = s.av_bypassed;
   document.getElementById("statAvSub").textContent = `Original bloqueado: ${s.av_blocked}`;
   document.getElementById("statIntercepted").textContent = s.ai_intercepted;
-  document.getElementById("statLegit").textContent = s.ai_legit_passed;
-  document.getElementById("statBreach").textContent = s.breaches;
-  document.getElementById("statFpSub").textContent = `Falsos positivos: ${s.false_positives}`;
+  document.getElementById("statLegitSub").textContent = `Legítimos: ${s.ai_legit_passed} (${s.false_positives} FP)`;
+  const hpEl = document.getElementById("statServerHp");
+  hpEl.textContent = `${hp}%`;
+  hpEl.className = `k-val ${hp > 60 ? "c-green" : hp > 30 ? "c-amber" : "c-red"}`;
+  document.getElementById("statBreachSub").textContent = `Invasões (Breach): ${s.breaches}`;
   document.getElementById("statLatency").textContent = `${Number(s.avg_latency_ms || 0).toFixed(2)} ms`;
-  document.getElementById("quarCount").textContent = `Quarentena: ${s.ai_intercepted}`;
+  document.getElementById("quarCount").textContent = `Quarentena: ${s.ai_intercepted} (clique p/ Diff)`;
 
   const pill = document.getElementById("pillShield");
   const btn4 = document.getElementById("btn4");
@@ -2099,11 +2346,34 @@ function renderUI(state) {
   renderInspector(state.selected_packet);
 }
 
+function openCodeDiffModal(packet = null) {
+  const pkt = packet || arenaState.selected_packet;
+  if (!pkt) return;
+  document.getElementById("modalTitle").textContent = `🔬 Diff de Código Real — ${pkt.id} (${pkt.label})`;
+  document.getElementById("modalMeta").innerHTML =
+    `<span><strong>Técnica:</strong> ${pkt.technique}</span>` +
+    `<span>• <strong>Arquivo Sandbox:</strong> ${pkt.sandbox_file || "—"}</span>` +
+    `<span>• <strong>Entropia:</strong> ${Number(pkt.original_entropy ?? pkt.entropy).toFixed(2)} → <strong>${pkt.entropy.toFixed(2)} bits/B</strong></span>` +
+    `<span>• <strong>Nós AST:</strong> ${pkt.original_ast_nodes ?? pkt.ast_nodes} → <strong>${pkt.ast_nodes}</strong></span>`;
+  document.getElementById("modalOrigHash").textContent = `SHA: ${(pkt.original_sha256 || pkt.sha256).slice(0, 14)}…`;
+  document.getElementById("modalMutHash").textContent = `SHA: ${pkt.sha256.slice(0, 14)}…`;
+  document.getElementById("modalMutLabel").textContent =
+    pkt.kind === "polymorphic" ? "🧬 CÓDIGO REAL MUTADO (AST / POLIMORFISMO)" : "📄 ARTEFATO INSPECIONADO";
+  document.getElementById("modalOrigCode").textContent = pkt.original_code_preview || pkt.code_preview || "";
+  document.getElementById("modalMutCode").textContent = pkt.code_preview || "";
+  document.getElementById("codeModal").classList.add("open");
+}
+
+function closeCodeDiffModal() {
+  document.getElementById("codeModal").classList.remove("open");
+}
+
 function selectPacket(id) {
   const found = (arenaState.events || []).find(e => e.id === id);
   if (found) {
     arenaState.selected_packet = found;
     renderUI(arenaState);
+    openCodeDiffModal(found);
   }
 }
 
@@ -2172,6 +2442,7 @@ function toggleSlowMo() {
 async function toggleAI() {
   const data = await apiPost("/api/toggle-ai");
   renderUI(data.state);
+  playSound("toggle");
   const g = getGeometry();
   addShockwave(g.radarX, g.radarY, data.ai_shield_enabled ? "#38bdf8" : "#ff4d5e");
   addFloatText(g.radarX, g.radarY - 56, data.status_text, data.ai_shield_enabled ? "#7dd3fc" : "#ff4d5e");
@@ -2184,6 +2455,7 @@ async function resetArena() {
   floatTexts.length = 0;
   screenShake = 0;
   quarPulse = 0;
+  displayedHp = 100;
   lastMutatedHash = "AGUARDANDO MUTAÇÃO...";
   lastMutatedEntropy = "0.00 bits/B";
   const data = await apiPost("/api/reset");
@@ -2192,13 +2464,18 @@ async function resetArena() {
 
 document.addEventListener("keydown", (e) => {
   if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
-  if (e.key === "1") fireOriginal();
-  else if (e.key === "2") firePolymorphic();
-  else if (e.key === "3") fireMixed();
-  else if (e.key === "4") toggleAI();
-  else if (e.key === "5") resetArena();
-  else if (e.key === "6") toggleSlowMo();
-  else if (e.key === "7") fireStressWave();
+  const k = e.key.toLowerCase();
+  if (k === "escape") closeCodeDiffModal();
+  else if (k === "1") fireOriginal();
+  else if (k === "2") firePolymorphic();
+  else if (k === "3") fireMixed();
+  else if (k === "4") toggleAI();
+  else if (k === "5") resetArena();
+  else if (k === "6") toggleSlowMo();
+  else if (k === "7") fireStressWave();
+  else if (k === "f") toggleFullscreen();
+  else if (k === "m") toggleSound();
+  else if (k === "c") openCodeDiffModal();
 });
 
 fetch("/api/state")
