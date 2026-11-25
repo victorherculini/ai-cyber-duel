@@ -17,6 +17,7 @@ from pathlib import Path
 
 import numpy as np
 import psutil
+from rich import box
 from rich.console import Console
 from rich.layout import Layout
 from rich.live import Live
@@ -142,55 +143,117 @@ def _read_proc_write_bytes(proc: psutil.Process, fallback: int = 0) -> int:
     return fallback
 
 
-def build_layout(red_rows: list, blue_rows: list, stats: dict) -> Layout:
+def _compact_sample_name(filename: str, compact: bool) -> str:
+    """Abrevia nomes longos de variantes em telas menores de projetor."""
+    if not compact:
+        return filename
+    stem = Path(filename).stem
+    parts = stem.split("_")
+    if len(parts) == 4 and parts[0] == "wave" and parts[2] == "variant":
+        return f"W{parts[1]}-V{parts[3]}"
+    return stem[:14]
+
+
+def build_layout(
+    red_rows: list,
+    blue_rows: list,
+    stats: dict,
+    width: int | None = None,
+    height: int | None = None,
+) -> Layout:
+    term_w = width if width is not None else console.size.width
+    term_h = height if height is not None else console.size.height
+    stacked = term_w < 96
+    compact = term_w < 130
+
     layout = Layout()
     layout.split_column(
         Layout(name="header", size=3),
         Layout(name="body"),
         Layout(name="footer", size=4),
     )
-    layout["body"].split_row(
-        Layout(name="red_panel"),
-        Layout(name="blue_panel"),
-    )
 
-    layout["header"].update(
-        Panel(
-            f"[bold white]⚔ AI CYBER DUEL — ARENA AO VIVO (AST + Watchdog + Psutil + Ensemble IA)[/bold white] | "
-            f"Onda Atual: [bold yellow]{stats['wave']}/{stats['total_waves']}[/bold yellow]",
-            style="bold blue",
+    if stacked:
+        layout["body"].split_column(
+            Layout(name="red_panel"),
+            Layout(name="blue_panel"),
         )
+        max_rows = max(2, min(6, (term_h - 7) // 2 - 6))
+    else:
+        layout["body"].split_row(
+            Layout(name="red_panel"),
+            Layout(name="blue_panel"),
+        )
+        max_rows = max(3, min(10, term_h - 13))
+
+    if term_w >= 100:
+        header_txt = (
+            f"[bold white]⚔ AI CYBER DUEL — ARENA AO VIVO (AST + Watchdog + Psutil + IA)[/bold white] | "
+            f"Onda: [bold yellow]{stats['wave']}/{stats['total_waves']}[/bold yellow]"
+        )
+    else:
+        header_txt = (
+            f"[bold white]⚔ AI CYBER DUEL — ARENA AO VIVO[/bold white] | "
+            f"Onda: [bold yellow]{stats['wave']}/{stats['total_waves']}[/bold yellow]"
+        )
+    layout["header"].update(Panel(header_txt, style="bold blue"))
+
+    red_title = "🔴 RED TEAM — AST" if compact else "🔴 RED TEAM — Gerador Polimórfico AST"
+    red_table = Table(
+        expand=True,
+        title=red_title,
+        box=box.SIMPLE_HEAD,
+        padding=(0, 1),
     )
+    red_table.add_column("Amostra", style="cyan", no_wrap=True, overflow="ellipsis")
+    red_table.add_column("Entr." if compact else "Entropia", justify="right", no_wrap=True)
+    red_table.add_column("SHA-256", style="dim", no_wrap=True, overflow="ellipsis")
+    red_table.add_column("AV" if compact else "AV Estático", style="bold red", no_wrap=True)
 
-    red_table = Table(expand=True, title="🔴 RED TEAM — Gerador Polimórfico AST")
-    red_table.add_column("Amostra", style="cyan")
-    red_table.add_column("Entropia", justify="right")
-    red_table.add_column("SHA-256", style="dim")
-    red_table.add_column("AV Estático", style="bold red")
-    for r in red_rows[-8:]:
-        red_table.add_row(*r)
-    layout["red_panel"].update(Panel(red_table, border_style="red"))
+    for sample_name, ent_str, sha_str, av_str in red_rows[-max_rows:]:
+        disp_name = _compact_sample_name(sample_name, compact)
+        disp_sha = sha_str[:8] + "…" if compact else sha_str
+        disp_av = "BYPASS" if (compact and not stacked) else av_str
+        red_table.add_row(disp_name, ent_str, disp_sha, disp_av)
+    layout["red_panel"].update(Panel(red_table, border_style="red", padding=(0, 1)))
 
-    blue_table = Table(expand=True, title="🔵 BLUE TEAM — Sensor Real & Ensemble IA")
-    blue_table.add_column("Amostra", style="cyan")
-    blue_table.add_column("Score IA", justify="right")
-    blue_table.add_column("Latência", justify="right")
-    blue_table.add_column("Ação SOAR", style="bold green")
-    for b in blue_rows[-8:]:
-        blue_table.add_row(*b)
-    layout["blue_panel"].update(Panel(blue_table, border_style="blue"))
+    blue_title = "🔵 BLUE TEAM — IA + SOAR" if compact else "🔵 BLUE TEAM — Sensor Real & Ensemble IA"
+    blue_table = Table(
+        expand=True,
+        title=blue_title,
+        box=box.SIMPLE_HEAD,
+        padding=(0, 1),
+    )
+    blue_table.add_column("Amostra", style="cyan", no_wrap=True, overflow="ellipsis")
+    blue_table.add_column("IA" if compact else "Score IA", justify="right", no_wrap=True)
+    blue_table.add_column("Lat." if compact else "Latência", justify="right", no_wrap=True)
+    blue_table.add_column("SOAR" if compact else "Ação SOAR", style="bold green", no_wrap=True)
+
+    for sample_name, score_str, lat_str, act_str in blue_rows[-max_rows:]:
+        disp_name = _compact_sample_name(sample_name, compact)
+        disp_lat = lat_str.replace(" ms", "ms") if compact else lat_str
+        disp_act = "QUAR. OK" if (compact and not stacked and act_str == "QUARENTENA OK") else act_str
+        blue_table.add_row(disp_name, score_str, disp_lat, disp_act)
+    layout["blue_panel"].update(Panel(blue_table, border_style="blue", padding=(0, 1)))
 
     bypass_pct = (stats["av_bypassed"] / stats["generated"] * 100.0) if stats["generated"] else 0.0
-    layout["footer"].update(
-        Panel(
+    if term_w < 90:
+        footer_txt = (
+            f"Amostras: [bold]{stats['generated']}[/bold] | "
+            f"Watchdog: [bold yellow]{stats['watchdog_events']}[/bold yellow] | "
+            f"AV Estático: [bold red]{stats['av_bypassed']}/{stats['generated']} ({bypass_pct:.0f}% bypass)[/bold red]\n"
+            f"Quarentena IA: [bold green]{stats['ai_detected']}/{stats['generated']}[/bold green] | "
+            f"Latência Média: [bold cyan]{stats['avg_latency_ms']:.2f} ms[/bold cyan]"
+        )
+    else:
+        footer_txt = (
             f"Amostras Geradas: [bold]{stats['generated']}[/bold] | "
             f"Watchdog (FS): [bold yellow]{stats['watchdog_events']}[/bold yellow] | "
-            f"Evasão AV Estático: [bold red]{stats['av_bypassed']}/{stats['generated']} ({bypass_pct:.0f}%)[/bold red] | "
+            f"Evasão AV Estático: [bold red]{stats['av_bypassed']}/{stats['generated']} ({bypass_pct:.0f}%)[/bold red]\n"
             f"Detectadas & Quarentenadas pela IA: [bold green]{stats['ai_detected']}/{stats['generated']}[/bold green] | "
-            f"Latência Média IA: [bold cyan]{stats['avg_latency_ms']:.2f} ms[/bold cyan]",
-            title="Placar em Tempo Real",
+            f"Latência Média IA: [bold cyan]{stats['avg_latency_ms']:.2f} ms[/bold cyan]"
         )
-    )
+    layout["footer"].update(Panel(footer_txt, title="Placar em Tempo Real"))
     return layout
 
 

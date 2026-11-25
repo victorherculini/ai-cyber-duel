@@ -95,6 +95,7 @@ flowchart LR
 ```text
 ai-cyber-duel/
 ├── README.md                              # Guia visual da apresentação (esta página)
+├── apresentar.py                          # Menu interativo de 1 tecla para apresentação ao vivo no projetor
 ├── arena_duel_live.py                     # Arena ao vivo (Split-Screen): AST + Watchdog + Psutil + Ensemble IA
 ├── requirements.txt                       # Dependências Python (rich, scikit-learn, numpy, pandas, psutil, watchdog)
 ├── .gitignore                             # Ignora venv, cache, sandbox, quarentena e artefatos temporários
@@ -139,6 +140,12 @@ python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements.txt
 ```
 
+#### ✅ Checklist Rápido de Terminal no Linux Mint (Antes de Projetar)
+- **Ative o `.venv` e verifique a versão:** `source .venv/bin/activate && python3 --version` (Python 3.10+).
+- **Ajuste a fonte para o projetor:** use `Ctrl + Shift + +` (aumentar) / `Ctrl + -` (diminuir) até o cabeçalho do `apresentar.py` mostrar largura `>= 96` colunas (ideal para o Split-Screen lado a lado; abaixo disso a arena empilha automaticamente os painéis sem cortar dados).
+- **Garanta suporte a cores/UTF-8:** se o terminal estiver sem cores, execute `export TERM=xterm-256color`.
+- **Inicie a central de apresentação com 1 comando:** `python3 apresentar.py`.
+
 ### 🪟 Opção 2: Windows (PowerShell — Desenvolvimento e Testes)
 
 ```powershell
@@ -171,6 +178,27 @@ Se houver qualquer restrição de rede, proxy ou permissão `sudo` no laboratór
 
 ## 🚀 Ordem de Execução da Demonstração Ao Vivo
 
+### 🎛️ Modo Recomendado para o Projetor — Menu Interativo de 1 Tecla
+Com o ambiente virtual ativado, você pode controlar toda a apresentação por um único painel interativo sem digitar comandos longos no palco:
+
+```bash
+python3 apresentar.py
+```
+
+Teclas disponíveis no menu:
+- `[1]` Gerador Polimórfico Básico
+- `[2]` Teste no Antivírus Tradicional SHA-256
+- `[3]` Treinar e Rodar IDS Defensivo com IA
+- `[4]` Motor Avançado de Mutação AST
+- `[5]` Arena Ao Vivo Split-Screen (`watchdog` + `psutil` + Ensemble IA)
+- `[6]` Exibir Relatório Técnico Gerado (`RELATORIO_INCIDENTE_SOC.md`)
+- `[0]` Limpar artefatos temporários e sair
+
+*(Para ensaios rápidos sem pausas internas nos scripts, rode `python3 apresentar.py --auto`.)*
+
+---
+
+### Execução Individual (Linha de Comando)
 Com o ambiente virtual ativado (ou no terminal do GitHub Codespaces), execute na sequência:
 
 ### Passo 1 — Red Team: Gerar Variantes Polimórficas

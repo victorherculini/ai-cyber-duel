@@ -5,18 +5,37 @@
 
 ---
 
-## ✅ Checklist Rápido (2 Minutos Antes de Começar)
+## ✅ Checklist Rápido (2 Minutos Antes de Começar — Linux Mint)
 
 1. **Aba 1 do Navegador:** Abra `https://github.com/victorherculini/ai-cyber-duel` (dê zoom `Ctrl + +` para 125% ou 150% no projetor).
 2. **Terminal (Linux Mint):**
-   - Aumente a fonte (`Ctrl + Shift + +` várias vezes até ficar legível do fundo da sala).
-   - Entre na pasta e ative o ambiente virtual:
+   - Entre na pasta, ative o ambiente virtual e valide a instalação:
      ```bash
      cd ai-cyber-duel
      source .venv/bin/activate
+     export TERM=xterm-256color
+     python3 --version
      clear
      ```
+   - Aumente a fonte (`Ctrl + Shift + +`) até ficar legível do fundo da sala.
+   - **Abra o menu interativo de 1 tecla:**
+     ```bash
+     python3 apresentar.py
+     ```
+   - Confira no topo do menu a resolução detectada do terminal (`Terminal: LxA`): acima de **96 colunas** a Arena Ao Vivo exibe o **Split-Screen lado a lado**; em projetores muito estreitos (`< 96` colunas) ela adapta automaticamente para painéis empilhados sem cortar texto.
+   - *(Dica: ao final da apresentação, pressione `[0]` no menu para limpar automaticamente `sandbox_env/`, `quarantine/`, `generated_variants/` e `RELATORIO_INCIDENTE_SOC.md`.)*
 3. **Plano B (Emergência):** Se o laboratório bloquear `git clone` ou `apt`/`pip`, clique no botão verde **`Code → Codespaces → Create codespace on main`** no próprio GitHub — o `.devcontainer` instala tudo sozinho em ~1 minuto.
+
+### Atalhos no Menu (`python3 apresentar.py`)
+| Tecla | Etapa / Ação | Comando Equivalente |
+| :---: | :--- | :--- |
+| **`1`** | Gerador Polimórfico Básico | `python3 01-red-team-polymorphic/polymorphic_simulator.py` |
+| **`2`** | Teste no Antivírus Tradicional SHA-256 | `python3 01-red-team-polymorphic/static_av_bypass_demo.py` |
+| **`3`** | Treinar e Rodar IDS Defensivo com IA | `python3 02-blue-team-realtime-ids/train_and_detect_ids.py` |
+| **`4`** | Motor Avançado de Mutação AST | `python3 01-red-team-polymorphic/ast_transform_engine.py` |
+| **`5`** | Arena Ao Vivo Split-Screen (`Watchdog` + `Psutil` + IA) | `python3 arena_duel_live.py` |
+| **`6`** | Exibir Relatório Técnico (`RELATORIO_INCIDENTE_SOC.md`) | Visualização em Markdown no terminal |
+| **`0`** | Limpar artefatos temporários e sair | Remove arquivos temporários da demo |
 
 ---
 
@@ -113,6 +132,16 @@ python3 02-blue-team-realtime-ids/train_and_detect_ids.py
   > *"Pressiono ENTER para o placar final do duelo:*
   > *- **Antivírus Tradicional (SHA-256):** 0/5 variantes polimórficas (0%) — evadido.*
   > *- **IDS com IA (RandomForest):** 5/5 variantes polimórficas (100%), com 0 falsos positivos nos controles legítimos."*
+
+---
+
+## ⚡ Etapa Extra (Opcional / Diferencial) — Mutação AST e Arena Ao Vivo com Telemetria Real
+**⏱️ Tempo:** ~3 minutos | **📺 Tela:** Menu `python3 apresentar.py` → Teclas **`[4]`**, **`[5]`** e **`[6]`**
+
+1. Pressione **`[4]`** (`python3 01-red-team-polymorphic/ast_transform_engine.py`) para mostrar reescrita estrutural real via árvore sintática (`ast`): renomeação de funções, embaralhamento de definições, conversão `for → while` e predicados opacos.
+2. Pressione **`[5]`** (`python3 arena_duel_live.py`) para abrir a **Arena Ao Vivo Split-Screen**, executando 5 ondas em `sandbox_env/` com captura real de disco (`watchdog`), I/O (`psutil`), pings TCP loopback (`127.0.0.1:59999`), detecção via Ensemble (`RandomForest + IsolationForest`) e isolamento automático em `quarantine/`.
+3. Pressione **`[6]`** para exibir o relatório técnico **`RELATORIO_INCIDENTE_SOC.md`** renderizado direto no terminal.
+4. Ao encerrar, pressione **`[0]`** para limpar todos os artefatos temporários.
 
 ---
 
