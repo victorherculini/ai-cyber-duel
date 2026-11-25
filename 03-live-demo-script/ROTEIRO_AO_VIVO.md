@@ -1,168 +1,124 @@
-# 🎤 Roteiro Ao Vivo — Apresentação Prática Sem Slides (`ai-cyber-duel`)
+# 🎤 Roteiro Ao Vivo — Apresentação Universitária de 30 a 45 Minutos (`ai-cyber-duel`)
 
-> **Duração sugerida:** 15 a 18 minutos (+ perguntas)
-> **Formato:** 100% prático, alternando entre o **Navegador (GitHub)** e o **Terminal (Linux Mint / Codespaces)**.
+> **Duração planejada:** 35 a 45 minutos (4 blocos práticos de ~10 min + ~5 min de arguição/Q&A)
+> **Formato:** 100% prático, sem slides, alternando entre **GitHub**, **Terminal (Linux Mint sem `sudo`)** e **Arena Tática Web (`http://127.0.0.1:8080`)**.
 
 ---
 
-## ✅ Checklist Rápido (2 Minutos Antes de Começar — Linux Mint sem `sudo`)
+## ✅ Checklist Rápido (3 Minutos Antes — Linux Mint 100% sem `sudo`)
 
-1. **Aba 1 do Navegador:** Abra `https://github.com/victorherculini/ai-cyber-duel` (dê zoom `Ctrl + +` para 125% ou 150% no projetor).
-2. **Terminal (Linux Mint — instalação 100% em espaço de usuário, sem `sudo`):**
-   - Primeira execução na máquina do laboratório (funciona mesmo sem `python3-venv` pré-instalado):
+1. **Aba 1 do Navegador:** Abra `https://github.com/victorherculini/ai-cyber-duel` (zoom `Ctrl + +` para 125%–150% no projetor).
+2. **Terminal (Linux Mint — espaço de usuário, zero `sudo`):**
+   ```bash
+   git clone https://github.com/victorherculini/ai-cyber-duel.git
+   cd ai-cyber-duel
+   python3 -m venv .venv || (python3 -m pip install --user virtualenv && python3 -m virtualenv .venv)
+   source .venv/bin/activate
+   python3 -m pip install --upgrade pip
+   python3 -m pip install -r requirements.txt
+   export TERM=xterm-256color
+   clear
+   python3 apresentar.py
+   ```
+   - **Se o `pip` não estiver instalado na sala (sem `sudo`):** execute antes de criar o `.venv`:
      ```bash
-     git clone https://github.com/victorherculini/ai-cyber-duel.git
-     cd ai-cyber-duel
-     python3 -m venv .venv || (python3 -m pip install --user virtualenv && python3 -m virtualenv .venv)
-     source .venv/bin/activate
-     python3 -m pip install --upgrade pip
-     python3 -m pip install -r requirements.txt
-     export TERM=xterm-256color
-     clear
-     python3 apresentar.py
+     curl -sS https://bootstrap.pypa.io/get-pip.py | python3 - --user
      ```
-   - *(Se o `pip` não estiver disponível na máquina da sala, rode antes `curl -sS https://bootstrap.pypa.io/get-pip.py | python3 - --user` ou abra direto o GitHub Codespaces no navegador.)*
-   - Aumente a fonte (`Ctrl + Shift + +`) até ficar legível do fundo da sala.
-   - Confira no topo do menu a resolução detectada do terminal (`Terminal: LxA`): acima de **96 colunas** a Arena Ao Vivo exibe o **Split-Screen lado a lado**; em projetores muito estreitos (`< 96` colunas) ela adapta automaticamente para painéis empilhados sem cortar texto.
-   - As opções gráficas abrem automaticamente no Linux Mint via `xdg-open` (`[7]` abre `dashboard_soc.png` e `[8]` abre `http://127.0.0.1:8080`, com fallback para `8081`). Para sair do servidor web `[8]` e voltar ao menu, pressione `Ctrl+C`.
-   - *(Dica: ao final da apresentação, pressione `[0]` no menu para limpar automaticamente `sandbox_env/`, `quarantine/`, `generated_variants/`, `RELATORIO_INCIDENTE_SOC.md` e `dashboard_soc.png`.)*
-3. **Plano B (Emergência):** Se o laboratório bloquear `git clone` ou `pip`, clique no botão verde **`Code → Codespaces → Create codespace on main`** no próprio GitHub — o `.devcontainer` instala tudo sozinho em ~1 minuto.
+   - **Aumente a fonte do terminal** (`Ctrl + Shift + +`) até ficar legível do fundo da sala. Acima de **96 colunas** a Arena Split-Screen fica lado a lado; abaixo disso empilha automaticamente sem cortes.
+   - **Abertura automática no Linux Mint:** `[7]` abre `dashboard_soc.png` e `[8]` abre `http://127.0.0.1:8080` (fallback `8081`) via `xdg-open` sem travar o terminal. Para sair de `[8]`, pressione `Ctrl+C`.
+3. **Plano B (Emergência em 1 Clique):** Se a rede do laboratório bloquear `git clone` ou `pip`, clique no botão verde **`Code → Codespaces → Create codespace on main`** no GitHub — o `.devcontainer` configura tudo em ~1 minuto.
 
-### Atalhos no Menu (`python3 apresentar.py`)
-| Tecla | Etapa / Ação | Comando Equivalente |
-| :---: | :--- | :--- |
-| **`1`** | Gerador Polimórfico Básico | `python3 01-red-team-polymorphic/polymorphic_simulator.py` |
-| **`2`** | Teste no Antivírus Tradicional SHA-256 | `python3 01-red-team-polymorphic/static_av_bypass_demo.py` |
-| **`3`** | Treinar e Rodar IDS Defensivo com IA | `python3 02-blue-team-realtime-ids/train_and_detect_ids.py` |
-| **`4`** | Motor Avançado de Mutação AST | `python3 01-red-team-polymorphic/ast_transform_engine.py` |
-| **`5`** | Arena Ao Vivo Split-Screen (`Watchdog` + `Psutil` + IA) | `python3 arena_duel_live.py` |
-| **`6`** | Exibir Relatório Técnico (`RELATORIO_INCIDENTE_SOC.md`) | Visualização em Markdown no terminal |
-| **`7`** | Gráficos Visuais SOC (Terminal + `dashboard_soc.png`) | `python3 visual_analytics.py` |
-| **`8`** | Arena Tática Web no Navegador (`localhost:8080`) | `python3 web_arena.py` |
-| **`0`** | Limpar artefatos temporários e sair | Remove arquivos temporários da demo |
+### Mapa de Atalhos do Menu (`python3 apresentar.py`)
+| Tecla | Módulo / Etapa | Bloco do Seminário |
+| :---: | :--- | :---: |
+| **`1`** | Gerador Polimórfico Básico (`polymorphic_simulator.py`) | Bloco 2 |
+| **`2`** | Teste no Antivírus Tradicional SHA-256 (`static_av_bypass_demo.py`) | Bloco 2 |
+| **`3`** | Treinar e Rodar IDS Defensivo com IA (`train_and_detect_ids.py`) | Bloco 2 |
+| **`4`** | Motor Avançado de Mutação AST (`ast_transform_engine.py`) | Bloco 3 |
+| **`5`** | Arena Ao Vivo Split-Screen (`arena_duel_live.py` — `Watchdog` + `Psutil` + IA) | Bloco 3 |
+| **`6`** | Exibir Relatório Técnico Gerado (`RELATORIO_INCIDENTE_SOC.md`) | Bloco 3 |
+| **`7`** | Gráficos Visuais SOC (`visual_analytics.py` — Terminal + `dashboard_soc.png`) | Bloco 3 |
+| **`8`** | Arena Tática Web no Navegador (`web_arena.py` — `http://127.0.0.1:8080`) | Bloco 4 |
+| **`0`** | Limpar artefatos temporários e sair | Encerramento |
 
 ---
 
-## 🗺️ Etapa 1 — Explicação no GitHub (Arquitetura e Teoria Visual)
-**⏱️ Tempo:** ~3 a 4 minutos | **📺 Tela:** Navegador no `README.md` do GitHub
+## 🗺️ Bloco 1 (00–10 min) — Contexto, Teoria e Arquitetura no GitHub
+**📺 Tela:** Navegador em `README.md` no GitHub
 
-### O que mostrar na tela
-1. Role até a tabela **"Comparativo Direto: Defesa Tradicional vs. Defesa com IA"**.
-2. Role até o **Diagrama Mermaid ("Arquitetura do Duelo")**.
+### Pontos para percorrer na tela
+1. **A Corrida Armamentista da IA na Cibersegurança:** explique por que assinaturas estáticas (`MD5`/`SHA-256`) falham com o **efeito avalanche** diante de motores polimórficos e LLMs.
+2. **Tabela Comparativa (AV Tradicional vs. IDS/EDR com IA):** destaque a mudança de paradigma (*"como o arquivo se parece"* → *"estrutura estatística + comportamento"*), falsos positivos e explicabilidade (XAI).
+3. **Diagrama Mermaid ("Arquitetura do Duelo"):** aponte os 3 blocos (Red Team → Defesa Legada → Blue Team com IA).
+4. **Aviso Ético:** reforce que 100% dos payloads são scripts Python benignos rodando localmente em `./sandbox_env/` e loopback `127.0.0.1`.
 
-### 🗣️ O que falar
-> *"Boa noite, professor e turma. Hoje não vamos usar slides tradicionais — toda a apresentação vai acontecer direto entre o nosso repositório no GitHub e o terminal ao vivo.*
+### 🗣️ Fala-chave de abertura
+> *"Hoje vamos apresentar sem slides: vamos alternar entre a documentação no GitHub, o terminal ao vivo no Linux Mint e uma Arena Tática Web rodando localmente com modelos reais de Machine Learning. Vamos provar na prática como a automação polimórfica e metamórfica derrota antivírus por assinatura — e como um Ensemble de IA com telemetria real de sistema operacional vira o jogo."*
+
+---
+
+## 🔴🔵 Bloco 2 (10–20 min) — Duelo Clássico: Polimorfismo vs. AV SHA-256 vs. IDS RandomForest
+**📺 Tela:** Terminal em `python3 apresentar.py` → Teclas **`[1]`**, **`[2]`** e **`[3]`**
+
+### 1. Tecla **`[1]`** — Gerador Polimórfico Básico (~3 min)
+- **Pausa 1 (`payload_original.py`):** aponte o **SHA-256** fixo e a **Entropia de Shannon** baixa (`~4.73 bits/B`, típica de código humano legível).
+- **Pausa 2 (Tabela das 5 variantes):** mostre os **6 hashes 100% distintos** (XOR dinâmico, renomeação, *junk code*, Zlib + Base85) e o **salto de entropia** para `6.0–6.35 bits/B`.
+- **Pausa 3 (Equivalência Funcional):** mostre o código ofuscado irreconhecível da Variante 5 gerando exatamente a mesma saída do original no terminal.
+
+### 2. Tecla **`[2]`** — Antivírus Tradicional SHA-256 (~3 min)
+- Mostre o `payload_original.py` **100% bloqueado** (hash na blacklist) e as **5 variantes polimórficas com 0/5 detecções (0% — evasão total)**.
+
+### 3. Tecla **`[3]`** — IDS Defensivo com IA (`RandomForestClassifier`) (~4 min)
+- **Pausa 1 (Treino ao vivo + Métricas):** destaque a divisão estratificada 80/20, Acurácia/Precisão/Recall/ROC-AUC e o gráfico de **Importância das Features (XAI)**.
+- **Fluxo em tempo real:**
+  - `backup_diario.py` → liberado (verde).
+  - **`instalador_compactado.pkg`** → **teste intencional de falso positivo!** Alta entropia (`6.24 bits/B`), mas comportamento limpo → **liberado sem falso alarme**.
+  - 5 variantes polimórficas reais → **5/5 interceptadas (100%)** com explicação XAI por evento.
+
+---
+
+## ⚙️ Bloco 3 (20–30 min) — Mutação AST Real, Telemetria de SO (`Watchdog`/`Psutil`) e Visual Analytics
+**📺 Tela:** Terminal em `python3 apresentar.py` → Teclas **`[4]`**, **`[5]`**, **`[6]`** e **`[7]`**
+
+### 1. Tecla **`[4]`** — Motor Avançado de Mutação Estrutural via AST (~2 min)
+- Explique a diferença entre **polimorfismo** (criptografia/packer) e **metamorfismo AST** (reescrita real da árvore sintática: `for → while`, renomeação de funções, embaralhamento e predicados opacos).
+- Aponte o detalhe crucial na tabela: nas ondas ímpares (`AST Opaque`), a entropia fica **baixa (`~4.93 bits/B`)** — enganando tanto o AV quanto detectores baseados só em entropia!
+
+### 2. Tecla **`[5]`** — Arena Ao Vivo Split-Screen (~4 min)
+- Mostre 5 ondas rodando ao vivo no sandbox (`./sandbox_env/`):
+  - **`watchdog`** interceptando eventos reais de criação de arquivos no disco;
+  - **`psutil`** medindo I/O real + servidor TCP `127.0.0.1:59999` capturando pings loopback reais;
+  - **Ensemble `RandomForest + IsolationForest`** isolando **10/10** variantes na pasta `quarantine/` em ~13 ms.
+
+### 3. Teclas **`[6]`** e **`[7]`** — Relatório SOC e Dashboard Dark Mode PNG (~4 min)
+- **`[6]`** projeta `RELATORIO_INCIDENTE_SOC.md` formatado em Markdown no terminal.
+- **`[7]`** renderiza os 3 gráficos de barras Unicode no terminal (Entropia vs. Limiar `5.50`, AV vs. IA e XAI) e abre automaticamente **`dashboard_soc.png`** (Curva ROC + Matriz de Confusão, Distribuição de Entropia e Latência por Onda AST).
+
+---
+
+## 🎮 Bloco 4 (30–40 min) — Clímax Visual: Arena Tática Web SOC (`localhost:8080`)
+**📺 Tela:** Navegador aberto pela tecla **`[8]`** (`python3 web_arena.py`)
+
+> **Destaque técnico para a banca:** tudo que acontece no navegador é **100% real no backend Python** — cada clique dispara mutação real via `ast` / `polymorphic_simulator`, execução real no sandbox, captura real de ping TCP em `127.0.0.1:59999` e inferência real do `RandomForest + IsolationForest`. Zero números mockados no JavaScript!
+
+### Sequência guiada de botões/atalhos no navegador (`1` a `7`)
+1. Pressione **`[6]`** para ligar o **Modo Câmera Lenta (`0.4x`)** — ideal para a turma enxergar cada detalhe no projetor.
+2. Pressione **`[1]`** (*Original*) → acompanhe o pacote colidir e explodir na **Muralha Legada SHA-256** (`AV BLOQUEOU`).
+3. Pressione **`[2]`** (*Polimórfico*) → aponte o polígono **mudando de forma e cor em voo** com a etiqueta flutuante `SHA:... | H=...`, atravessando a muralha SHA-256 (**BYPASS**) e sendo travado pelo feixe neon + onda de choque do **Escudo Neural IA** até o cofre de **Quarentena** (com explosão de partículas violetas). Clique no evento no feed para mostrar o **Painel de Inspeção** (tempo de mutação, I/O real, pings loopback reais, `RF%`, `IsolationForest` e código mutado).
+4. Pressione **`[3]`** (*Tráfego Misto x4*) → destaque o `instalador_compactado.pkg` (blob `zlib` real com `H ≈ 7.93`, **0% risco RF**, zero falsos positivos!) chegando limpo ao servidor enquanto os ataques são interceptados.
+5. Pressione **`[4]`** para **DESLIGAR o Escudo IA** e depois **`[2]`** → mostre o impacto visual do **BREACH** (tremor de tela + choque vermelho no servidor) provando o que acontece sem defesa de IA. Pressione **`[4]`** para religar o escudo.
+6. Volte para velocidade normal (**`[6]` → `1.0x`**) e pressione **`[7]`** (*Onda Massiva de Estresse x8*) → deixe a batalha tática rodar enquanto o **gráfico de histórico de risco IA em tempo real** é desenhado no rodapé do Canvas!
+7. Pressione **`[5]`** se quiser resetar para perguntas ao vivo, ou volte ao terminal com **`Ctrl+C`** e pressione **`[0]`** no menu para limpar todos os artefatos temporários.
+
+---
+
+## 🏁 Bloco 5 (40–45 min) — Conclusão e Arguição (Q&A)
+**📺 Tela:** Placar / Arena Web ou Diagrama Mermaid no GitHub *(apoio rápido: [`PERGUNTAS_PROFESSOR.md`](./PERGUNTAS_PROFESSOR.md))*
+
+### 🗣️ Encerramento (2 min)
+> *"Três conclusões objetivas que comprovamos ao vivo:*
+> *1. **Assinaturas estáticas (SHA-256)** continuam úteis como filtro rápido para ameaças conhecidas, mas falham 100% diante de polimorfismo e metamorfismo AST automatizados.*
+> *2. **Defesa baseada em IA + telemetria real de SO** (entropia, estrutura AST, disco e rede) generaliza para ameaças inéditas mantendo falsos positivos sob controle — inclusive para arquivos legítimos compactados.*
+> *3. **Defesa em profundidade e XAI são essenciais:** modelos defensivos precisam ser auditáveis, rápidos (milissegundos) e resilientes a evasão adversarial.*
 >
-> *O tema é a corrida armamentista da Inteligência Artificial na cibersegurança: como atacantes usam técnicas generativas e polimorfismo para derrotar antivírus tradicionais, e como defensores usam a mesma tecnologia — Machine Learning — para pegar esses ataques em tempo real.*
->
-> *Antes de rodar o código, um aviso ético importante: toda a simulação é 100% inofensiva. O nosso 'malware' simulado na verdade é apenas um script Python benigno que imprime uma mensagem no terminal.*
->
-> *[Aponte para o diagrama Mermaid na tela]*
-> *Olhem o fluxo que vamos provar ao vivo nos próximos 10 minutos: primeiro, o lado vermelho (Red Team) pega um código benigno conhecido e gera 5 variantes polimórficas com hashes SHA-256 totalmente novos. Em seguida, passamos tudo num Antivírus tradicional por assinatura e vamos ver ele falhar miseravelmente. Por fim, treinamos um IDS com Machine Learning ao vivo e colocamos ele para inspecionar os mesmos arquivos reais em tempo real."*
-
----
-
-## 🔴 Etapa 2 — Rodando o Ataque Polimórfico (Red Team)
-**⏱️ Tempo:** ~3 a 4 minutos | **📺 Tela:** Terminal
-
-### Comando para executar
-```bash
-python3 01-red-team-polymorphic/polymorphic_simulator.py
-```
-
-### 🗣️ O que falar em cada pausa do script
-
-- **Na Pausa 1 (Mostrando o `payload_original.py` na tela):**
-  > *"Aqui está o nosso ponto de partida: um script legível, simples, que apenas imprime 'Simulacao de Payload Ativo'. Reparem em dois números aqui embaixo: o hash **SHA-256** dele — que é a impressão digital criptográfica do arquivo — e a **Entropia de Shannon**, que está em torno de 4,7 bits por byte, típica de código-fonte humano legível.*
-  > *Agora vou pressionar ENTER para ligar o motor polimórfico."*
-
-- **Na Pausa 2 (Após gerar as 5 variantes e exibir a tabela `rich`):**
-  > *"Em menos de dois segundos, o motor aplicou renomeação aleatória de variáveis, injeção de junk code (código morto), compressão Zlib e criptografia XOR com chaves dinâmicas e Base85.*
-  > *Olhem a coluna de **SHA-256**: 6 arquivos, 6 hashes 100% diferentes! Mesmo mudando poucos elementos, o efeito avalanche do SHA-256 destrói qualquer assinatura anterior.*
-  > *Agora reparem na coluna de **Entropia de Shannon** (em vermelho): o código normal tinha ~4,7 bits/byte, e as variantes saltaram para acima de **6,0 a 6,3 bits/byte**. Guardem esse detalhe — essa aleatoriedade extra é a pista estatística que vai trair o atacante depois!"*
-
-- **Após pressionar ENTER (Prova de Equivalência Funcional):**
-  > *"Aqui embaixo está o trecho da Variante 5: completamente ilegível para um humano. Mas quando executamos o original e a Variante 5 ao vivo, olhem o quadro verde: **exatamente a mesma saída no terminal**. Código diferente, hash diferente, mesmo comportamento. Hoje, LLMs conseguem automatizar essa reescrita em segundos para cada alvo individual."*
-
----
-
-## ⚠️ Etapa 3 — Mostrando a Falha do Antivírus Tradicional
-**⏱️ Tempo:** ~2 a 3 minutos | **📺 Tela:** Terminal
-
-### Comando para executar
-```bash
-python3 01-red-team-polymorphic/static_av_bypass_demo.py
-```
-
-### 🗣️ O que falar em cada pausa do script
-
-- **Na Pausa 1 (Mostrando o Banco de Assinaturas SHA-256):**
-  > *"Agora vamos colocar esses arquivos na frente de um Antivírus tradicional, baseado em banco de assinaturas SHA-256 — como funciona a primeira camada de bloqueio estático.*
-  > *Reparem que a assinatura exata do `payload_original.py` JÁ está cadastrada na blacklist do antivírus (destacada em verde). Vamos rodar a varredura na pasta `generated_variants/`."*
-
-- **Após a varredura (Tabela de Resultados + Veredito Vermelho):**
-  > *"Resultado na tela: a versão original conhecida foi **100% bloqueada**, exatamente como esperado.*
-  > *Mas olhem as 5 variantes polimórficas logo abaixo: **0 de 5 detectadas — 0% de detecção, evasão total!** Todas passaram livres porque seus hashes nunca existiram antes no banco de dados.*
-  > *Isso prova na prática por que depender só de assinatura estática contra IA ofensiva é uma batalha perdida."*
-
----
-
-## 🔵 Etapa 4 — Rodando o IDS com IA e Pegando o Ataque em Tempo Real (Blue Team)
-**⏱️ Tempo:** ~4 a 5 minutos | **📺 Tela:** Terminal
-
-*(Opcional: se quiser mostrar a geração do dataset separadamente antes, rode `python3 02-blue-team-realtime-ids/generate_telemetry_data.py`. Caso contrário, o comando abaixo já gera automaticamente se não existir.)*
-
-### Comando para executar
-```bash
-python3 02-blue-team-realtime-ids/train_and_detect_ids.py
-```
-
-### 🗣️ O que falar em cada pausa do script
-
-- **Na Pausa 1 (Após o treinamento do `RandomForestClassifier` e exibição das métricas):**
-  > *"Agora vira o jogo: entramos com o Blue Team. Acabamos de treinar um classificador **Random Forest** ao vivo em menos de 1 segundo sobre 2.000 eventos de telemetria de sistema operacional e rede (80% treino, 20% teste inédito).*
-  > *Reparem na tabela de métricas: Acurácia, Precisão e Recall altíssimos, com matriz de confusão transparente. E mais importante: olhem o gráfico de **Importância das Features** — a IA não olha para o hash do arquivo! Ela aprende a cruzar entropia, sinais de ofuscação, criação anômala de processos, chamadas de API suspeitas e conexões de rede.*
-  > *Vou pressionar ENTER para ligar o sensor em tempo real sobre os **mesmos arquivos reais** que enganaram o antivírus."*
-
-- **Durante o fluxo de monitoramento em tempo real (aponte conforme os painéis aparecem):**
-  > *"Primeiro passam dois eventos legítimos de controle em **VERDE**:*
-  > *1) `backup_diario.py` — código normal, baixa entropia, liberado.*
-  > *2) Olhem o segundo evento (`instalador_compactado.pkg`) — esse é um teste proposital de **Falso Positivo**! Ele tem entropia **alta (6,24 bits/byte)** por ser um pacote compactado legítimo, mas como o comportamento de processos e rede está limpo, a IA **NÃO** disparou alarme falso!*
-  >
-  > *Agora chegam as 5 variantes polimórficas REAIS da pasta do Red Team... e os **painéis vermelhos de ALERTA CRÍTICO** disparam em tempo real!*
-  > *Mesmo com hashes SHA-256 inéditos, a IA pega uma por uma e ainda entrega **Explicabilidade (XAI)**: ela mostra exatamente quais features fugiram da média normal — a entropia real que calculamos do disco, o score de ofuscação e a telemetria anômala de execução."*
-
-- **Na Pausa Final (Placar Comparativo):**
-  > *"Pressiono ENTER para o placar final do duelo:*
-  > *- **Antivírus Tradicional (SHA-256):** 0/5 variantes polimórficas (0%) — evadido.*
-  > *- **IDS com IA (RandomForest):** 5/5 variantes polimórficas (100%), com 0 falsos positivos nos controles legítimos."*
-
----
-
-## ⚡ Etapa Extra (Opcional / Diferencial) — Mutação AST, Arena Terminal, Visual Analytics e Arena Web SOC
-**⏱️ Tempo:** ~4 a 5 minutos | **📺 Tela:** Menu `python3 apresentar.py` → Teclas **`[4]`**, **`[5]`**, **`[6]`**, **`[7]`** e **`[8]`**
-
-1. Pressione **`[4]`** (`python3 01-red-team-polymorphic/ast_transform_engine.py`) para mostrar reescrita estrutural real via árvore sintática (`ast`): renomeação de funções, embaralhamento de definições, conversão `for → while` e predicados opacos.
-2. Pressione **`[5]`** (`python3 arena_duel_live.py`) para abrir a **Arena Ao Vivo Split-Screen**, executando 5 ondas em `sandbox_env/` com captura real de disco (`watchdog`), I/O (`psutil`), pings TCP loopback (`127.0.0.1:59999`), detecção via Ensemble (`RandomForest + IsolationForest`) e isolamento automático em `quarantine/`.
-3. Pressione **`[6]`** para exibir o relatório técnico **`RELATORIO_INCIDENTE_SOC.md`** renderizado direto no terminal.
-4. Pressione **`[7]`** (`python3 visual_analytics.py`) para projetar os gráficos de barras em Unicode (Entropia vs. Limiar, AV vs. IA e XAI) e abrir automaticamente o dashboard em alta resolução **`dashboard_soc.png`** (Curva ROC + Matriz de Confusão, Distribuição de Entropia e Latência por Onda AST).
-5. Pressione **`[8]`** (`python3 web_arena.py`) para abrir a **Arena Tática Web SOC** em `http://127.0.0.1:8080` (estilo Tower Defense / Radar no navegador):
-   - Aperte **`1`** (*Pacote Original*) → bloqueado na **Muralha Legada SHA-256**.
-   - Aperte **`2`** (*Ataque Polimórfico*) → atravessa a muralha (bypass) e é interceptado no ar pelo **Escudo Neural IA** para a quarentena.
-   - Aperte **`3`** (*Tráfego Misto*) → mostra o **instalador compactado legítimo** (alta entropia, 0 falsos positivos) passando limpo enquanto os ataques são isolados.
-   - Aperte **`4`** para **desligar o Escudo IA** e depois **`2`** → mostra o ataque causando **BREACH** no servidor sem a defesa de IA; aperte **`4`** novamente para religar a defesa e **`5`** para resetar.
-   - Pressione `Ctrl+C` no terminal para encerrar o servidor e voltar ao menu.
-6. Ao encerrar, pressione **`[0]`** para limpar todos os artefatos temporários.
-
----
-
-## 🏁 Etapa 5 — Conclusão e Abertura para Perguntas
-**⏱️ Tempo:** ~2 minutos | **📺 Tela:** Placar Final no Terminal (ou Diagrama no GitHub)
-
-### 🗣️ O que falar
-> *"Para fechar com três aprendizados práticos:*
-> *1. **Assinaturas estáticas não morreram**, mas hoje servem apenas como filtro barato e rápido para ameaças já conhecidas — nunca como única defesa.*
-> *2. **Polimorfismo esconde o hash, mas deixa rastros estatísticos e comportamentais.** Ao combinar análise estática heurística (entropia) com comportamento em tempo real (EDR/NDR), o custo para o atacante aumenta drasticamente.*
-> *3. **A IA não é uma bala de prata:** assim como atacantes usam IA para mutar código, eles também tentam ataques adversariais contra modelos defensivos (como camuflar entropia). Por isso, cibersegurança moderna é defesa em profundidade contínua.*
->
-> *Todo o código está aberto em `github.com/victorherculini/ai-cyber-duel` para quem quiser testar. Muito obrigado — fico aberto às perguntas do professor e da turma!"*
+> *Todo o código é aberto em `github.com/victorherculini/ai-cyber-duel`. Muito obrigado — fico à disposição para as perguntas do professor e da turma!"*

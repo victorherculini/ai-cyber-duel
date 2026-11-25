@@ -249,11 +249,11 @@ python3 visual_analytics.py
 ```
 *(Plota gráficos de barras no terminal comparando Entropia de Shannon, Taxa de Detecção e Importância das Features XAI, além de gerar e abrir `dashboard_soc.png` em alta resolução com Curva ROC + Matriz de Confusão, Distribuição de Entropia e Latência por Onda AST. Use `--no-open` ou `--auto` em ambientes sem interface gráfica.)*
 
-### Passo 8 — Arena Tática Web em `localhost` (Radar SOC Animado no Navegador)
+### Passo 8 — Arena Tática Web em `localhost` (Cyber Tower Defense / Radar SOC Animado)
 ```bash
 python3 web_arena.py
 ```
-*(Inicia servidor HTTP nativo em `http://127.0.0.1:8080` com fallback automático para `8081`, sem Node.js/npm, e abre o navegador automaticamente. Use os botões ou teclas `1` a `5` na página para disparar pacote original, ataque polimórfico/AST, tráfego misto, ligar/desligar o Escudo IA e resetar a arena. Pressione `Ctrl+C` no terminal para encerrar.)*
+*(Inicia servidor HTTP nativo em `http://127.0.0.1:8080` com fallback automático para `8081`, sem Node.js/npm, e abre o navegador automaticamente. Exibe batalha tática neon com trilhas luminosas, partículas, metamorfose visual dos pacotes com `SHA-256` + `Entropia` flutuantes e gráfico de histórico de risco no Canvas. Atalhos na página: `[1]` Original, `[2]` Polimórfico/AST, `[3]` Misto `x4`, `[4]` Escudo IA Ligado/Desligado, `[5]` Reset, `[6]` Câmera Lenta `1.0x / 0.4x` e `[7]` Onda Contínua de Estresse `x8`. Pressione `Ctrl+C` no terminal para encerrar.)*
 
 > 💡 **Dica de Apresentação:** Cada script possui pausas interativas (`[Pressione ENTER para continuar...]`) para explicar os resultados no projetor. Para rodar sem pausas durante ensaios rápidos, adicione a flag `--auto` em qualquer comando.
 

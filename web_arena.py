@@ -928,6 +928,36 @@ class CyberDuelArenaEngine:
         packets.append(self.spawn_polymorphic()["packet"])
         return {"packets": packets, "state": self.get_state()}
 
+    def spawn_stress_wave(self, count: int = 8) -> dict[str, Any]:
+        """
+        Dispara uma onda massiva de estresse com 8 pacotes reais variados
+        (legítimos normais + pacote compactado Zlib + polimórficos + AST reais),
+        todos processados de verdade no sandbox e no Ensemble ML.
+        """
+        total = max(4, min(12, int(count)))
+        pattern = [
+            "legit",
+            "poly",
+            "poly",
+            "legit_packed",
+            "poly",
+            "legit",
+            "poly",
+            "poly",
+        ]
+        packets: list[dict[str, Any]] = []
+        for idx in range(total):
+            kind = pattern[idx % len(pattern)]
+            if kind == "legit":
+                with self._lock:
+                    packets.append(self._spawn_legit_unlocked(packed_hard_negative=False))
+            elif kind == "legit_packed":
+                with self._lock:
+                    packets.append(self._spawn_legit_unlocked(packed_hard_negative=True))
+            else:
+                packets.append(self.spawn_polymorphic()["packet"])
+        return {"packets": packets, "count": len(packets), "state": self.get_state()}
+
 
 HTML_PAGE = r"""<!DOCTYPE html>
 <html lang="pt-BR">
@@ -1029,25 +1059,27 @@ HTML_PAGE = r"""<!DOCTYPE html>
   .zone-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.8rem; font-weight: 600; }
   .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; }
   #arenaCanvas {
-    width: 100%; height: 330px; display: block;
-    border-radius: 10px; border: 1px solid #1b2b45; background: #060b14;
+    width: 100%; height: 400px; display: block;
+    border-radius: 10px; border: 1px solid #1b2b45; background: #040811;
+    box-shadow: inset 0 0 36px rgba(56, 189, 248, 0.08);
   }
 
   .controls {
-    display: grid; grid-template-columns: repeat(5, minmax(150px, 1fr));
-    gap: 10px; margin-top: 10px;
+    display: grid; grid-template-columns: repeat(7, minmax(120px, 1fr));
+    gap: 8px; margin-top: 10px;
   }
   .btn {
-    border: 1px solid var(--border); border-radius: 10px; padding: 11px 12px;
-    font-family: var(--sans); font-size: 0.86rem; font-weight: 700; cursor: pointer;
+    border: 1px solid var(--border); border-radius: 10px; padding: 10px 9px;
+    font-family: var(--sans); font-size: 0.8rem; font-weight: 700; cursor: pointer;
     color: var(--text); background: var(--panel-2);
-    display: flex; align-items: center; justify-content: center; gap: 8px;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
     transition: transform 0.12s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   }
   .btn:hover { transform: translateY(-2px); }
   .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.55; cursor: wait; transform: none; }
   .btn .key {
-    font-family: var(--mono); font-size: 0.74rem; padding: 2px 6px; border-radius: 5px;
+    font-family: var(--mono); font-size: 0.72rem; padding: 2px 5px; border-radius: 5px;
     background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.2);
   }
   .btn-amber { background: linear-gradient(135deg, #422b08, #281b07); border-color: rgba(251,191,36,0.55); color: #fde68a; }
@@ -1055,6 +1087,16 @@ HTML_PAGE = r"""<!DOCTYPE html>
   .btn-purple { background: linear-gradient(135deg, #321652, #1b0e2e); border-color: rgba(168,85,247,0.6); color: #e9d5ff; }
   .btn-ai-on { background: linear-gradient(135deg, #0a3c35, #08242c); border-color: rgba(34,197,94,0.7); color: #bbf7d0; }
   .btn-ai-off { background: linear-gradient(135deg, #5c121b, #300a10); border-color: var(--red); color: #fff; }
+  .btn-speed-norm { background: linear-gradient(135deg, #102a43, #0b1c2d); border-color: rgba(56,189,248,0.55); color: #bae6fd; }
+  .btn-speed-slow {
+    background: linear-gradient(135deg, #4a3008, #2c1b04); border-color: var(--amber); color: #fef08a;
+    box-shadow: 0 0 16px rgba(251,191,36,0.38);
+  }
+  .btn-stress {
+    background: linear-gradient(135deg, #5a1230, #2c0920); border-color: rgba(244,63,94,0.75); color: #ffe4e6;
+    box-shadow: 0 0 14px rgba(244,63,94,0.25);
+  }
+  .btn-stress:hover { box-shadow: 0 0 22px rgba(244,63,94,0.5); }
   .btn-reset { background: #141e30; border-color: #364b6e; color: var(--muted); }
   .btn-reset:hover { color: var(--text); border-color: var(--cyan); }
 
@@ -1115,6 +1157,9 @@ HTML_PAGE = r"""<!DOCTYPE html>
   .b-legit { background: rgba(56,189,248,0.18); color: #7dd3fc; border: 1px solid rgba(56,189,248,0.55); }
   .b-breach { background: rgba(255,77,94,0.25); color: #fda4af; border: 1px solid var(--red); }
 
+  @media (max-width: 1220px) {
+    .controls { grid-template-columns: repeat(4, 1fr); }
+  }
   @media (max-width: 1080px) {
     .kpi-row { grid-template-columns: repeat(3, 1fr); }
     .controls { grid-template-columns: repeat(2, 1fr); }
@@ -1175,25 +1220,31 @@ HTML_PAGE = r"""<!DOCTYPE html>
         <span><i class="dot" style="background:var(--green)"></i>Tráfego Legítimo</span>
         <span><i class="dot" style="background:var(--cyan)"></i>Interceptação Neural IA</span>
       </div>
-      <span style="font-family:var(--mono);font-size:0.76rem;color:var(--muted);">Atalhos no teclado: [1] [2] [3] [4] [5]</span>
+      <span style="font-family:var(--mono);font-size:0.76rem;color:var(--muted);">Atalhos no teclado: [1]–[5] Ações • [6] Câmera Lenta • [7] Onda Massiva (x8)</span>
     </div>
-    <canvas id="arenaCanvas" width="1280" height="340"></canvas>
+    <canvas id="arenaCanvas" width="1280" height="400"></canvas>
 
     <div class="controls">
       <button class="btn btn-amber" id="btn1" onclick="fireOriginal()">
-        <span class="key">1</span> 📦 Pacote Original
+        <span class="key">1</span> 📦 Original
       </button>
       <button class="btn btn-red" id="btn2" onclick="firePolymorphic()">
-        <span class="key">2</span> 🧬 Ataque Polimórfico
+        <span class="key">2</span> 🧬 Polimórfico
       </button>
       <button class="btn btn-purple" id="btn3" onclick="fireMixed()">
-        <span class="key">3</span> 🌊 Tráfego Misto (x4)
+        <span class="key">3</span> 🌊 Misto (x4)
       </button>
       <button class="btn btn-ai-on" id="btn4" onclick="toggleAI()">
-        <span class="key">4</span> 🧠 Escudo IA: LIGADO
+        <span class="key">4</span> 🧠 IA: LIGADO
       </button>
       <button class="btn btn-reset" id="btn5" onclick="resetArena()">
-        <span class="key">5</span> 🔄 Resetar Arena
+        <span class="key">5</span> 🔄 Resetar
+      </button>
+      <button class="btn btn-speed-norm" id="btn6" onclick="toggleSlowMo()">
+        <span class="key">6</span> ⏱ Vel: 1.0x
+      </button>
+      <button class="btn btn-stress" id="btn7" onclick="fireStressWave()">
+        <span class="key">7</span> ⚡ Onda x8
       </button>
     </div>
   </section>
@@ -1277,20 +1328,28 @@ let arenaState = {
 
 const projectiles = [];
 const effects = [];
+const particles = [];
 const floatTexts = [];
 let radarAngle = 0;
 let factoryAngle = 0;
+let scanlineX = 0;
+let simSpeed = 1.0;
+let screenShake = 0;
+let quarPulse = 0;
+let stressBusy = false;
 let lastMutatedHash = "AGUARDANDO MUTAÇÃO...";
 let lastMutatedEntropy = "0.00 bits/B";
 let coreAlertFlash = 0;
 let avWallFlash = 0;
 let avWallColor = "#fbbf24";
 
+const CANVAS_H = 400;
+
 function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   canvas.width = Math.max(820, Math.floor(rect.width * dpr));
-  canvas.height = Math.floor(330 * dpr);
+  canvas.height = Math.floor(CANVAS_H * dpr);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 window.addEventListener("resize", resizeCanvas);
@@ -1316,14 +1375,15 @@ function drawRoundedRect(x, y, w, h, r) {
 
 function getGeometry() {
   const w = canvas.getBoundingClientRect().width || 960;
-  const h = 330;
+  const h = CANVAS_H;
+  const playH = h - 72; // Área de combate acima do gráfico HUD de histórico de risco
   return {
-    w, h,
-    factoryX: w * 0.12, factoryY: h * 0.48,
-    avX: w * 0.44,
-    radarX: w * 0.72, radarY: h * 0.44, radarR: Math.min(82, w * 0.082),
-    coreX: w * 0.91, coreY: h * 0.34,
-    quarX: w * 0.89, quarY: h * 0.78
+    w, h, playH,
+    factoryX: w * 0.11, factoryY: playH * 0.50,
+    avX: w * 0.43,
+    radarX: w * 0.71, radarY: playH * 0.46, radarR: Math.min(82, w * 0.08),
+    coreX: w * 0.91, coreY: playH * 0.31,
+    quarX: w * 0.89, quarY: playH * 0.79
   };
 }
 
@@ -1331,19 +1391,39 @@ function addFloatText(x, y, text, color) {
   floatTexts.push({ x, y, text, color, life: 1.0 });
 }
 
-function addRipple(x, y, color, maxR = 46) {
+function addRipple(x, y, color, maxR = 52) {
   effects.push({ type: "ripple", x, y, r: 6, maxR, color, life: 1.0 });
+}
+
+function addShockwave(x, y, color) {
+  effects.push({ type: "ripple", x, y, r: 8, maxR: 78, color, life: 1.0, lw: 3.4 });
+  effects.push({ type: "ripple", x, y, r: 4, maxR: 46, color: "#ffffff", life: 0.85, lw: 2.0 });
 }
 
 function addBeam(x1, y1, x2, y2, color) {
   effects.push({ type: "beam", x1, y1, x2, y2, color, life: 1.0 });
 }
 
+function addParticleBurst(x, y, color, count = 24, speed = 3.8) {
+  for (let i = 0; i < count; i++) {
+    const ang = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.45;
+    const spd = (0.35 + Math.random() * 0.95) * speed;
+    particles.push({
+      x, y,
+      vx: Math.cos(ang) * spd,
+      vy: Math.sin(ang) * spd,
+      size: 1.8 + Math.random() * 2.8,
+      color,
+      life: 0.85 + Math.random() * 0.35
+    });
+  }
+}
+
 function launchProjectile(packet, delayMs = 0) {
   setTimeout(() => {
     const g = getGeometry();
-    const laneOffset = (Math.random() - 0.5) * 86;
-    const startY = Math.max(64, Math.min(g.h - 70, g.factoryY + laneOffset));
+    const laneOffset = (Math.random() - 0.5) * 92;
+    const startY = Math.max(66, Math.min(g.playH - 54, g.factoryY + laneOffset));
     const colorMap = {
       original: "#fbbf24",
       polymorphic: "#ff4d5e",
@@ -1351,289 +1431,547 @@ function launchProjectile(packet, delayMs = 0) {
       legit_packed: "#38bdf8"
     };
     if (packet.kind === "polymorphic") {
-      lastMutatedHash = packet.sha256.slice(0, 18) + "...";
+      lastMutatedHash = packet.sha256.slice(0, 16) + "...";
       lastMutatedEntropy = `${packet.entropy.toFixed(2)} bits/B`;
+      addParticleBurst(g.factoryX + 22, startY, "#ff4d5e", 12, 2.4);
+    } else if (packet.kind === "original") {
+      addParticleBurst(g.factoryX + 22, startY, "#fbbf24", 10, 2.0);
     }
     projectiles.push({
       packet,
       x: g.factoryX + 26,
       y: startY,
-      vx: 3.6,
+      vx: 3.4,
       color: colorMap[packet.kind] || "#38bdf8",
       stage: "to_av",
       scannedAi: false,
+      morphPhase: Math.random() * Math.PI * 2,
       trail: []
     });
   }, delayMs);
 }
 
-function updateAndDraw() {
-  const g = getGeometry();
-  ctx.clearRect(0, 0, g.w, g.h);
+function drawRiskHistoryHUD(g) {
+  const hudY = g.playH + 8;
+  const hudH = g.h - hudY - 8;
+  const hudX = 14;
+  const hudW = g.w - 28;
 
-  ctx.strokeStyle = "rgba(34, 50, 77, 0.32)";
+  ctx.save();
+  ctx.fillStyle = "rgba(8, 15, 28, 0.92)";
+  ctx.strokeStyle = "rgba(56, 189, 248, 0.32)";
+  ctx.lineWidth = 1.2;
+  drawRoundedRect(hudX, hudY, hudW, hudH, 8);
+  ctx.fill();
+  ctx.stroke();
+
+  // Título e legenda do gráfico HUD
+  ctx.fillStyle = "#7dd3fc";
+  ctx.font = "bold 10.5px monospace";
+  ctx.textAlign = "left";
+  ctx.fillText("📈 HISTÓRICO DE RISCO IA EM TEMPO REAL (0%–100%)", hudX + 10, hudY + 14);
+
+  const recent = (arenaState.events || []).slice(-24);
+  ctx.fillStyle = "#8ea3c2";
+  ctx.textAlign = "right";
+  ctx.fillText(`Eventos no gráfico: ${recent.length}/24  |  Limiar IA: 50%`, hudX + hudW - 10, hudY + 14);
+
+  const plotX = hudX + 12;
+  const plotY = hudY + 21;
+  const plotW = hudW - 24;
+  const plotH = hudH - 27;
+
+  // Linha tracejada do limiar 50%
+  const y50 = plotY + plotH * 0.5;
+  ctx.strokeStyle = "rgba(251, 191, 36, 0.45)";
+  ctx.setLineDash([5, 5]);
   ctx.lineWidth = 1;
-  for (let x = 0; x < g.w; x += 36) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, g.h); ctx.stroke();
-  }
-  for (let y = 0; y < g.h; y += 36) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(g.w, y); ctx.stroke();
-  }
-
-  ctx.strokeStyle = "rgba(56, 189, 248, 0.14)";
-  ctx.setLineDash([8, 8]);
   ctx.beginPath();
-  ctx.moveTo(g.factoryX + 42, g.factoryY);
-  ctx.lineTo(g.coreX - 34, g.coreY);
+  ctx.moveTo(plotX, y50);
+  ctx.lineTo(plotX + plotW, y50);
   ctx.stroke();
   ctx.setLineDash([]);
 
-  // ZONA 1: FÁBRICA POLIMÓRFICA
-  factoryAngle += 0.018;
+  if (recent.length === 0) {
+    ctx.fillStyle = "rgba(142, 163, 194, 0.55)";
+    ctx.font = "10.5px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("Aguardando pacotes reais da API Python (pressione [2], [3] ou [7] Onda x8)...", plotX + plotW / 2, y50 + 4);
+    ctx.restore();
+    return;
+  }
+
+  const pts = recent.map((ev, idx) => {
+    const px = recent.length === 1 ? plotX + plotW / 2 : plotX + (idx / (recent.length - 1)) * plotW;
+    const risk = Math.max(0, Math.min(100, Number(ev.ai_risk_pct || 0)));
+    const py = plotY + plotH - (risk / 100) * plotH;
+    return { x: px, y: py, ev, risk };
+  });
+
+  // Área luminosa sob a curva
+  if (pts.length >= 2) {
+    const areaGrad = ctx.createLinearGradient(0, plotY, 0, plotY + plotH);
+    areaGrad.addColorStop(0, "rgba(255, 77, 94, 0.28)");
+    areaGrad.addColorStop(0.55, "rgba(56, 189, 248, 0.16)");
+    areaGrad.addColorStop(1, "rgba(34, 197, 94, 0.04)");
+    ctx.fillStyle = areaGrad;
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, plotY + plotH);
+    for (const pt of pts) ctx.lineTo(pt.x, pt.y);
+    ctx.lineTo(pts[pts.length - 1].x, plotY + plotH);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = "#38bdf8";
+    ctx.lineWidth = 2;
+    ctx.shadowColor = "#38bdf8";
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    pts.forEach((pt, idx) => (idx === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)));
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+  }
+
+  // Pontos individuais coloridos por veredito real
+  for (const pt of pts) {
+    const dotColor =
+      pt.ev.outcome === "BREACH" ? "#ff4d5e" :
+      pt.ev.outcome === "AI_QUARANTINED" ? "#c084fc" :
+      pt.ev.outcome === "AV_BLOCKED" ? "#fbbf24" : "#22c55e";
+    ctx.fillStyle = dotColor;
+    ctx.shadowColor = dotColor;
+    ctx.shadowBlur = 8;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 3.6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+
+function updateAndDraw() {
+  const g = getGeometry();
+  ctx.save();
+  ctx.clearRect(0, 0, g.w, g.h);
+
+  // Micro tremor de tela em caso de BREACH
+  if (screenShake > 0) {
+    const dx = (Math.random() - 0.5) * screenShake * 7;
+    const dy = (Math.random() - 0.5) * screenShake * 5;
+    ctx.translate(dx, dy);
+    screenShake = Math.max(0, screenShake - 0.08);
+  }
+
+  // Grid tático neon + feixe de varredura horizontal
+  ctx.strokeStyle = "rgba(34, 58, 92, 0.30)";
+  ctx.lineWidth = 1;
+  for (let x = 0; x < g.w; x += 36) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, g.playH); ctx.stroke();
+  }
+  for (let y = 0; y < g.playH; y += 36) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(g.w, y); ctx.stroke();
+  }
+  scanlineX = (scanlineX + 1.8 * simSpeed) % g.w;
+  const scanGrad = ctx.createLinearGradient(scanlineX - 50, 0, scanlineX + 10, 0);
+  scanGrad.addColorStop(0, "rgba(56, 189, 248, 0)");
+  scanGrad.addColorStop(1, "rgba(56, 189, 248, 0.06)");
+  ctx.fillStyle = scanGrad;
+  ctx.fillRect(scanlineX - 50, 0, 60, g.playH);
+
+  // Trilhos táticos luminosos entre zonas
+  ctx.strokeStyle = "rgba(56, 189, 248, 0.16)";
+  ctx.setLineDash([8, 8]);
+  for (const offset of [-36, 0, 36]) {
+    ctx.beginPath();
+    ctx.moveTo(g.factoryX + 42, g.factoryY + offset);
+    ctx.lineTo(g.avX, g.factoryY + offset * 0.7);
+    ctx.lineTo(g.coreX - 42, g.coreY + offset * 0.25);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = "rgba(168, 85, 247, 0.22)";
+  ctx.beginPath();
+  ctx.moveTo(g.radarX, g.radarY + 26);
+  ctx.lineTo(g.quarX - 42, g.quarY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Selo de Câmera Lenta no canto do battlemap
+  if (simSpeed < 0.9) {
+    ctx.save();
+    ctx.fillStyle = "rgba(251, 191, 36, 0.18)";
+    ctx.strokeStyle = "#fbbf24";
+    ctx.lineWidth = 1.4;
+    drawRoundedRect(g.w - 178, 10, 164, 24, 6);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#fef08a";
+    ctx.font = "bold 11px monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("⏱ CÂMERA LENTA (0.4x)", g.w - 96, 26);
+    ctx.restore();
+  }
+
+  // ZONA 1: FÁBRICA POLIMÓRFICA (NEON RED)
+  factoryAngle += 0.022 * simSpeed;
   ctx.save();
   ctx.translate(g.factoryX, g.factoryY);
-  ctx.strokeStyle = "rgba(255, 77, 94, 0.55)";
-  ctx.lineWidth = 2;
+  ctx.shadowColor = "#ff4d5e"; ctx.shadowBlur = 14;
+  ctx.strokeStyle = "rgba(255, 77, 94, 0.72)";
+  ctx.lineWidth = 2.2;
   ctx.beginPath(); ctx.arc(0, 0, 44, factoryAngle, factoryAngle + Math.PI * 1.4); ctx.stroke();
-  ctx.strokeStyle = "rgba(251, 191, 36, 0.45)";
-  ctx.beginPath(); ctx.arc(0, 0, 32, -factoryAngle * 1.4, -factoryAngle * 1.4 + Math.PI * 1.2); ctx.stroke();
+  ctx.shadowColor = "#fbbf24"; ctx.shadowBlur = 10;
+  ctx.strokeStyle = "rgba(251, 191, 36, 0.58)";
+  ctx.beginPath(); ctx.arc(0, 0, 32, -factoryAngle * 1.5, -factoryAngle * 1.5 + Math.PI * 1.25); ctx.stroke();
   ctx.fillStyle = "#240c14";
-  ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = "#ff4d5e"; ctx.lineWidth = 2.2; ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, 0, 25, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = "#ff4d5e"; ctx.lineWidth = 2.4; ctx.stroke();
+  ctx.shadowBlur = 0;
   ctx.fillStyle = "#ffe4e6"; ctx.font = "bold 18px sans-serif"; ctx.textAlign = "center";
   ctx.fillText("🧬", 0, 6);
   ctx.restore();
 
   ctx.fillStyle = "#fda4af"; ctx.font = "bold 12px system-ui"; ctx.textAlign = "center";
-  ctx.fillText("FÁBRICA POLIMÓRFICA", g.factoryX, 26);
-  ctx.fillStyle = "#8ea3c2"; ctx.font = "11px monospace";
-  ctx.fillText("AST + XOR/Base85 (Real)", g.factoryX, 42);
-  ctx.fillStyle = "#fbbf24"; ctx.font = "10.5px monospace";
-  ctx.fillText(`SHA: ${lastMutatedHash}`, g.factoryX, g.h - 32);
+  ctx.fillText("FÁBRICA POLIMÓRFICA", g.factoryX, 24);
+  ctx.fillStyle = "#8ea3c2"; ctx.font = "10.5px monospace";
+  ctx.fillText("AST + XOR/Base85 (Real)", g.factoryX, 39);
+  ctx.fillStyle = "#fbbf24"; ctx.font = "10px monospace";
+  ctx.fillText(`SHA: ${lastMutatedHash}`, g.factoryX, g.playH - 22);
   ctx.fillStyle = "#ff8fa3";
-  ctx.fillText(`Entropia: ${lastMutatedEntropy}`, g.factoryX, g.h - 15);
+  ctx.fillText(`Entropia: ${lastMutatedEntropy}`, g.factoryX, g.playH - 7);
 
   // ZONA 2: MURALHA LEGADA (AV SHA-256)
-  if (avWallFlash > 0) avWallFlash -= 0.04;
+  if (avWallFlash > 0) avWallFlash = Math.max(0, avWallFlash - 0.04 * simSpeed);
   ctx.save();
-  const wallGrad = ctx.createLinearGradient(g.avX - 10, 46, g.avX + 10, g.h - 46);
-  wallGrad.addColorStop(0, "rgba(251, 191, 36, 0.15)");
-  wallGrad.addColorStop(0.5, avWallFlash > 0 ? avWallColor : "rgba(251, 191, 36, 0.72)");
-  wallGrad.addColorStop(1, "rgba(251, 191, 36, 0.15)");
+  ctx.shadowColor = avWallFlash > 0 ? avWallColor : "#fbbf24";
+  ctx.shadowBlur = avWallFlash > 0 ? 22 : 10;
+  const wallGrad = ctx.createLinearGradient(g.avX - 10, 48, g.avX + 10, g.playH - 36);
+  wallGrad.addColorStop(0, "rgba(251, 191, 36, 0.14)");
+  wallGrad.addColorStop(0.5, avWallFlash > 0 ? avWallColor : "rgba(251, 191, 36, 0.78)");
+  wallGrad.addColorStop(1, "rgba(251, 191, 36, 0.14)");
   ctx.fillStyle = wallGrad;
-  ctx.fillRect(g.avX - 5, 48, 10, g.h - 92);
+  ctx.fillRect(g.avX - 5, 48, 10, g.playH - 80);
   ctx.strokeStyle = avWallFlash > 0 ? avWallColor : "#fbbf24";
   ctx.lineWidth = 2;
-  ctx.strokeRect(g.avX - 5, 48, 10, g.h - 92);
+  ctx.strokeRect(g.avX - 5, 48, 10, g.playH - 80);
   ctx.restore();
 
   ctx.fillStyle = "#fde68a"; ctx.font = "bold 12px system-ui"; ctx.textAlign = "center";
-  ctx.fillText("MURALHA LEGADA", g.avX, 26);
-  ctx.fillStyle = "#8ea3c2"; ctx.font = "11px monospace";
-  ctx.fillText("AV Assinatura SHA-256", g.avX, 42);
+  ctx.fillText("MURALHA LEGADA", g.avX, 24);
+  ctx.fillStyle = "#8ea3c2"; ctx.font = "10.5px monospace";
+  ctx.fillText("AV Assinatura SHA-256", g.avX, 39);
   ctx.fillStyle = "#fbbf24"; ctx.font = "10.5px monospace";
-  ctx.fillText(`Bloq: ${arenaState.stats.av_blocked} | Bypass: ${arenaState.stats.av_bypassed}`, g.avX, g.h - 16);
+  ctx.fillText(`Bloq: ${arenaState.stats.av_blocked} | Bypass: ${arenaState.stats.av_bypassed}`, g.avX, g.playH - 9);
 
-  // ZONA 3: ESCUDO NEURAL / RADAR IDS
+  // ZONA 3: ESCUDO NEURAL / RADAR IDS (NEON CYAN)
   const shieldOn = arenaState.ai_shield_enabled;
-  radarAngle += shieldOn ? 0.045 : 0.008;
+  radarAngle += (shieldOn ? 0.048 : 0.008) * simSpeed;
   ctx.save();
   ctx.translate(g.radarX, g.radarY);
   const rColor = shieldOn ? "56, 189, 248" : "255, 77, 94";
   for (const frac of [1.0, 0.68, 0.36]) {
-    ctx.strokeStyle = `rgba(${rColor}, ${shieldOn ? 0.35 : 0.25})`;
-    ctx.lineWidth = 1.4;
+    ctx.strokeStyle = `rgba(${rColor}, ${shieldOn ? 0.42 : 0.25})`;
+    ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.arc(0, 0, g.radarR * frac, 0, Math.PI * 2); ctx.stroke();
   }
   if (shieldOn) {
-    ctx.fillStyle = "rgba(56, 189, 248, 0.16)";
+    ctx.fillStyle = "rgba(56, 189, 248, 0.18)";
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.arc(0, 0, g.radarR, radarAngle - 0.55, radarAngle);
+    ctx.arc(0, 0, g.radarR, radarAngle - 0.65, radarAngle);
     ctx.closePath();
     ctx.fill();
+    ctx.shadowColor = "#38bdf8"; ctx.shadowBlur = 14;
     ctx.strokeStyle = "#38bdf8";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.4;
     ctx.beginPath(); ctx.moveTo(0, 0);
     ctx.lineTo(Math.cos(radarAngle) * g.radarR, Math.sin(radarAngle) * g.radarR);
     ctx.stroke();
   } else {
-    ctx.strokeStyle = "rgba(255, 77, 94, 0.7)";
-    ctx.lineWidth = 2.4;
+    ctx.strokeStyle = "rgba(255, 77, 94, 0.78)";
+    ctx.lineWidth = 2.6;
     ctx.beginPath();
     ctx.moveTo(-26, -26); ctx.lineTo(26, 26);
     ctx.moveTo(26, -26); ctx.lineTo(-26, 26);
     ctx.stroke();
   }
+  ctx.shadowColor = shieldOn ? "#38bdf8" : "#ff4d5e"; ctx.shadowBlur = 16;
   ctx.fillStyle = shieldOn ? "#072033" : "#2a0b12";
   ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = shieldOn ? "#38bdf8" : "#ff4d5e"; ctx.lineWidth = 2; ctx.stroke();
+  ctx.strokeStyle = shieldOn ? "#38bdf8" : "#ff4d5e"; ctx.lineWidth = 2.2; ctx.stroke();
+  ctx.shadowBlur = 0;
   ctx.fillStyle = "#fff"; ctx.font = "bold 16px sans-serif"; ctx.textAlign = "center";
   ctx.fillText("🧠", 0, 6);
   ctx.restore();
 
   ctx.fillStyle = shieldOn ? "#7dd3fc" : "#fda4af"; ctx.font = "bold 12px system-ui"; ctx.textAlign = "center";
-  ctx.fillText(shieldOn ? "ESCUDO NEURAL (IDS IA)" : "ESCUDO NEURAL (OFFLINE!)", g.radarX, 26);
-  ctx.fillStyle = "#8ea3c2"; ctx.font = "11px monospace";
-  ctx.fillText("RandomForest + IsoForest", g.radarX, 42);
+  ctx.fillText(shieldOn ? "ESCUDO NEURAL (IDS IA)" : "ESCUDO NEURAL (OFFLINE!)", g.radarX, 24);
+  ctx.fillStyle = "#8ea3c2"; ctx.font = "10.5px monospace";
+  ctx.fillText("RandomForest + IsoForest", g.radarX, 39);
 
-  if (coreAlertFlash > 0) coreAlertFlash -= 0.035;
+  // Núcleo Protegido (Servidor)
+  if (coreAlertFlash > 0) coreAlertFlash = Math.max(0, coreAlertFlash - 0.035 * simSpeed);
   ctx.save();
+  ctx.shadowColor = coreAlertFlash > 0 ? "#ff4d5e" : "#22c55e";
+  ctx.shadowBlur = coreAlertFlash > 0 ? 22 : 10;
   ctx.fillStyle = coreAlertFlash > 0 ? "rgba(255,77,94,0.38)" : "#0d2236";
   ctx.strokeStyle = coreAlertFlash > 0 ? "#ff4d5e" : "#22c55e";
   ctx.lineWidth = 2.2;
-  drawRoundedRect(g.coreX - 42, g.coreY - 30, 84, 60, 10);
+  drawRoundedRect(g.coreX - 42, g.coreY - 28, 84, 56, 10);
   ctx.fill(); ctx.stroke();
+  ctx.shadowBlur = 0;
   ctx.fillStyle = "#fff"; ctx.font = "bold 18px sans-serif"; ctx.textAlign = "center";
   ctx.fillText("🖥️", g.coreX, g.coreY - 2);
-  ctx.fillStyle = coreAlertFlash > 0 ? "#fecdd3" : "#86efac"; ctx.font = "bold 10.5px monospace";
-  ctx.fillText("SERVIDOR", g.coreX, g.coreY + 18);
+  ctx.fillStyle = coreAlertFlash > 0 ? "#fecdd3" : "#86efac"; ctx.font = "bold 10px monospace";
+  ctx.fillText("SERVIDOR", g.coreX, g.coreY + 17);
   ctx.restore();
 
+  // Cofre de Quarentena (pulsa quando neutraliza ameaça)
+  if (quarPulse > 0) quarPulse = Math.max(0, quarPulse - 0.04 * simSpeed);
   ctx.save();
-  ctx.fillStyle = "#121a2d";
-  ctx.strokeStyle = "#a855f7";
-  ctx.lineWidth = 2;
-  drawRoundedRect(g.quarX - 48, g.quarY - 26, 96, 52, 10);
+  ctx.shadowColor = "#a855f7";
+  ctx.shadowBlur = 10 + quarPulse * 18;
+  ctx.fillStyle = quarPulse > 0 ? "rgba(168, 85, 247, 0.25)" : "#121a2d";
+  ctx.strokeStyle = quarPulse > 0 ? "#e879f9" : "#a855f7";
+  ctx.lineWidth = 2.2;
+  drawRoundedRect(g.quarX - 48, g.quarY - 25, 96, 50, 10);
   ctx.fill(); ctx.stroke();
-  ctx.fillStyle = "#e9d5ff"; ctx.font = "bold 11px monospace"; ctx.textAlign = "center";
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = "#e9d5ff"; ctx.font = "bold 10.5px monospace"; ctx.textAlign = "center";
   ctx.fillText("🔒 QUARENTENA", g.quarX, g.quarY - 4);
-  ctx.fillStyle = "#c084fc"; ctx.font = "bold 13px monospace";
-  ctx.fillText(`${arenaState.stats.ai_intercepted} isolados`, g.quarX, g.quarY + 15);
+  ctx.fillStyle = "#d8b4fe"; ctx.font = "bold 12.5px monospace";
+  ctx.fillText(`${arenaState.stats.ai_intercepted} isolados`, g.quarX, g.quarY + 14);
   ctx.restore();
 
+  // === PROJÉTEIS EM VOO COM METAMORFOSE VISUAL ===
   for (let i = projectiles.length - 1; i >= 0; i--) {
     const p = projectiles[i];
+    p.morphPhase += 0.08 * simSpeed;
     p.trail.push({ x: p.x, y: p.y });
-    if (p.trail.length > 14) p.trail.shift();
+    if (p.trail.length > 22) p.trail.shift();
 
     if (p.stage === "to_av") {
-      p.x += p.vx;
+      p.x += p.vx * simSpeed;
       if (p.x >= g.avX - 8) {
         if (p.packet.outcome === "AV_BLOCKED") {
           avWallFlash = 1.0; avWallColor = "#22c55e";
-          addRipple(g.avX, p.y, "#22c55e", 42);
-          addFloatText(g.avX, p.y - 16, "✔ AV BLOQUEOU (SHA-256)", "#86efac");
+          addShockwave(g.avX, p.y, "#22c55e");
+          addParticleBurst(g.avX, p.y, "#fbbf24", 24, 3.6);
+          addFloatText(g.avX, p.y - 18, "✔ AV BLOQUEOU (SHA-256)", "#86efac");
           projectiles.splice(i, 1);
           continue;
         } else {
           if (p.packet.kind === "polymorphic") {
             avWallFlash = 1.0; avWallColor = "#ff4d5e";
-            addRipple(g.avX, p.y, "#ff4d5e", 30);
-            addFloatText(g.avX, p.y - 16, "✖ BYPASS AV (HASH INÉDITO)", "#fda4af");
+            addRipple(g.avX, p.y, "#ff4d5e", 34);
+            addParticleBurst(g.avX, p.y, "#ff4d5e", 14, 2.8);
+            addFloatText(g.avX, p.y - 18, "✖ BYPASS AV (HASH INÉDITO)", "#fda4af");
           }
           p.stage = "to_ai";
         }
       }
     } else if (p.stage === "to_ai") {
-      p.x += p.vx;
-      p.y += (g.coreY - p.y) * 0.014;
+      p.x += p.vx * simSpeed;
+      p.y += (g.coreY - p.y) * 0.014 * simSpeed;
       const distRadar = Math.hypot(p.x - g.radarX, p.y - g.radarY);
-      if (!p.scannedAi && (distRadar < g.radarR * 0.92 || p.x >= g.radarX - 18)) {
+      if (!p.scannedAi && (distRadar < g.radarR * 0.94 || p.x >= g.radarX - 18)) {
         p.scannedAi = true;
         if (p.packet.outcome === "AI_QUARANTINED") {
           addBeam(g.radarX, g.radarY, p.x, p.y, "#38bdf8");
-          addRipple(p.x, p.y, "#38bdf8", 44);
-          addFloatText(p.x, p.y - 18, `⚡ IA ${p.packet.ai_risk_pct}% → QUARENTENA`, "#7dd3fc");
+          addShockwave(p.x, p.y, "#38bdf8");
+          addParticleBurst(p.x, p.y, "#38bdf8", 22, 3.5);
+          addFloatText(p.x, p.y - 20, `⚡ IA ${p.packet.ai_risk_pct}% → QUARENTENA`, "#7dd3fc");
           p.stage = "to_quarantine";
         } else if (p.packet.outcome === "LEGIT_PASSED") {
           if (p.packet.ai_enabled_at_arrival) {
             addBeam(g.radarX, g.radarY, p.x, p.y, "#22c55e");
-            addFloatText(p.x, p.y - 16, p.packet.kind === "legit_packed" ? "✔ ALTA ENTROPIA, 0 FP!" : "✔ LEGÍTIMO OK", "#86efac");
+            addRipple(p.x, p.y, "#22c55e", 34);
+            addFloatText(p.x, p.y - 18, p.packet.kind === "legit_packed" ? "✔ ALTA ENTROPIA, 0 FP!" : "✔ LEGÍTIMO OK", "#86efac");
           }
           p.stage = "to_core";
         } else {
-          addFloatText(p.x, p.y - 16, "⚠ RADAR OFF — INVASÃO!", "#ff4d5e");
+          addFloatText(p.x, p.y - 18, "⚠ RADAR OFF — INVASÃO!", "#ff4d5e");
           p.stage = "to_core";
         }
       }
     } else if (p.stage === "to_quarantine") {
-      p.x += (g.quarX - p.x) * 0.11;
-      p.y += (g.quarY - p.y) * 0.11;
-      if (Math.hypot(p.x - g.quarX, p.y - g.quarY) < 12) {
-        addRipple(g.quarX, g.quarY, "#a855f7", 36);
+      p.x += (g.quarX - p.x) * 0.11 * simSpeed;
+      p.y += (g.quarY - p.y) * 0.11 * simSpeed;
+      if (Math.hypot(p.x - g.quarX, p.y - g.quarY) < 14) {
+        quarPulse = 1.0;
+        addShockwave(g.quarX, g.quarY, "#c084fc");
+        addParticleBurst(g.quarX, g.quarY, "#d946ef", 30, 4.4);
+        addParticleBurst(g.quarX, g.quarY, "#38bdf8", 12, 3.0);
         projectiles.splice(i, 1);
         continue;
       }
     } else if (p.stage === "to_core") {
-      p.x += (g.coreX - p.x) * 0.08 + 1.2;
-      p.y += (g.coreY - p.y) * 0.08;
-      if (p.x >= g.coreX - 16) {
+      p.x += ((g.coreX - p.x) * 0.08 + 1.2) * simSpeed;
+      p.y += (g.coreY - p.y) * 0.08 * simSpeed;
+      if (p.x >= g.coreX - 18) {
         if (p.packet.outcome === "BREACH") {
           coreAlertFlash = 1.0;
-          addRipple(g.coreX, g.coreY, "#ff4d5e", 58);
-          addFloatText(g.coreX - 30, g.coreY - 34, "🚨 BREACH NO SERVIDOR!", "#ff4d5e");
+          screenShake = 1.0;
+          addShockwave(g.coreX, g.coreY, "#ff4d5e");
+          addParticleBurst(g.coreX, g.coreY, "#ff4d5e", 34, 4.8);
+          addFloatText(g.coreX - 36, g.coreY - 34, "🚨 BREACH NO SERVIDOR!", "#ff4d5e");
         } else {
-          addRipple(g.coreX, g.coreY, "#22c55e", 32);
+          addRipple(g.coreX, g.coreY, "#22c55e", 34);
+          addParticleBurst(g.coreX, g.coreY, "#22c55e", 14, 2.5);
         }
         projectiles.splice(i, 1);
         continue;
       }
     }
 
-    for (let t = 0; t < p.trail.length; t++) {
-      ctx.fillStyle = p.color;
-      ctx.globalAlpha = (t / p.trail.length) * 0.55;
-      ctx.beginPath();
-      ctx.arc(p.trail[t].x, p.trail[t].y, 2.2 + (t / p.trail.length) * 3.5, 0, Math.PI * 2);
-      ctx.fill();
+    // Cor neon dinâmica (polimórficos mudam de tonalidade durante a metamorfose!)
+    let drawColor = p.color;
+    if (p.packet.kind === "polymorphic") {
+      const morphPalette = ["#ff4d5e", "#f43f5e", "#fb7185", "#e879f9", "#ff6b35"];
+      drawColor = morphPalette[Math.floor(p.morphPhase * 1.4) % morphPalette.length];
     }
-    ctx.globalAlpha = 1;
 
+    // Trilha luminosa contínua com glow
+    if (p.trail.length >= 2) {
+      ctx.save();
+      ctx.lineCap = "round";
+      for (let t = 1; t < p.trail.length; t++) {
+        const frac = t / p.trail.length;
+        ctx.strokeStyle = drawColor;
+        ctx.globalAlpha = frac * 0.68;
+        ctx.lineWidth = 1.4 + frac * 5.2;
+        ctx.shadowColor = drawColor;
+        ctx.shadowBlur = 10 * frac;
+        ctx.beginPath();
+        ctx.moveTo(p.trail[t - 1].x, p.trail[t - 1].y);
+        ctx.lineTo(p.trail[t].x, p.trail[t].y);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // Desenho do pacote (com metamorfose de polígono 3→4→5→6→8 lados para polimórfico/AST!)
     ctx.save();
     ctx.translate(p.x, p.y);
-    ctx.fillStyle = p.color;
-    ctx.shadowColor = p.color;
-    ctx.shadowBlur = 14;
+    ctx.fillStyle = drawColor;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.3;
+    ctx.shadowColor = drawColor;
+    ctx.shadowBlur = 20;
     if (p.packet.kind === "polymorphic") {
+      const sideSeq = [3, 4, 5, 6, 8];
+      const sides = sideSeq[Math.floor(p.morphPhase * 1.2) % sideSeq.length];
+      const rad = 10.5 + Math.sin(p.morphPhase * 2.5) * 1.4;
       ctx.beginPath();
-      for (let s = 0; s < 6; s++) {
-        const a = (Math.PI / 3) * s + radarAngle;
-        const px = Math.cos(a) * 9.5;
-        const py = Math.sin(a) * 9.5;
+      for (let s = 0; s < sides; s++) {
+        const a = ((Math.PI * 2) / sides) * s + p.morphPhase * 1.4;
+        const px = Math.cos(a) * rad;
+        const py = Math.sin(a) * rad;
         s === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
       }
-      ctx.closePath(); ctx.fill();
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
     } else if (p.packet.kind === "original") {
       ctx.rotate(Math.PI / 4);
-      ctx.fillRect(-7, -7, 14, 14);
+      ctx.fillRect(-7.5, -7.5, 15, 15);
+      ctx.strokeRect(-7.5, -7.5, 15, 15);
     } else {
-      ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(0, 0, 8.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     }
     ctx.restore();
+
+    // Rótulo flutuante acoplado ao pacote em voo (SHA-256 + Entropia real!)
+    if (p.packet.kind === "polymorphic" || simSpeed < 0.9 || p.packet.kind === "legit_packed") {
+      ctx.save();
+      const tag =
+        p.packet.kind === "polymorphic"
+          ? `${p.packet.sha256.slice(0, 8)} | H=${p.packet.entropy.toFixed(2)}`
+          : p.packet.kind === "legit_packed"
+          ? `PKG | H=${p.packet.entropy.toFixed(2)}`
+          : `${p.packet.label.slice(0, 12)} | H=${p.packet.entropy.toFixed(2)}`;
+      ctx.font = "bold 9.5px monospace";
+      const tw = ctx.measureText(tag).width + 10;
+      ctx.fillStyle = "rgba(6, 11, 20, 0.84)";
+      ctx.strokeStyle = drawColor;
+      ctx.lineWidth = 1;
+      drawRoundedRect(p.x - tw / 2, p.y - 28, tw, 15, 4);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#f8fafc";
+      ctx.textAlign = "center";
+      ctx.fillText(tag, p.x, p.y - 17);
+      ctx.restore();
+    }
   }
 
+  // Efeitos (ondas de choque e feixes de energia do Radar IA)
   for (let i = effects.length - 1; i >= 0; i--) {
     const ef = effects[i];
-    ef.life -= 0.032;
+    ef.life -= 0.032 * simSpeed;
     if (ef.life <= 0) { effects.splice(i, 1); continue; }
     ctx.save();
     ctx.globalAlpha = ef.life;
     if (ef.type === "ripple") {
-      ef.r += (ef.maxR - ef.r) * 0.14;
-      ctx.strokeStyle = ef.color; ctx.lineWidth = 2.5;
+      ef.r += (ef.maxR - ef.r) * 0.14 * simSpeed;
+      ctx.strokeStyle = ef.color;
+      ctx.shadowColor = ef.color; ctx.shadowBlur = 14;
+      ctx.lineWidth = ef.lw || 2.5;
       ctx.beginPath(); ctx.arc(ef.x, ef.y, ef.r, 0, Math.PI * 2); ctx.stroke();
     } else if (ef.type === "beam") {
-      ctx.strokeStyle = ef.color; ctx.lineWidth = 3.2;
-      ctx.shadowColor = ef.color; ctx.shadowBlur = 12;
+      // Feixe principal + núcleo branco neon + arco elétrico sutil
+      ctx.strokeStyle = ef.color;
+      ctx.lineWidth = 5.0;
+      ctx.shadowColor = ef.color; ctx.shadowBlur = 18;
       ctx.beginPath(); ctx.moveTo(ef.x1, ef.y1); ctx.lineTo(ef.x2, ef.y2); ctx.stroke();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 1.6;
+      const mx = (ef.x1 + ef.x2) / 2 + (Math.random() - 0.5) * 14;
+      const my = (ef.y1 + ef.y2) / 2 + (Math.random() - 0.5) * 14;
+      ctx.beginPath();
+      ctx.moveTo(ef.x1, ef.y1); ctx.lineTo(mx, my); ctx.lineTo(ef.x2, ef.y2);
+      ctx.stroke();
     }
     ctx.restore();
   }
 
+  // Partículas luminosas (explosões na muralha, interceptação e quarentena)
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const pt = particles[i];
+    pt.x += pt.vx * simSpeed;
+    pt.y += pt.vy * simSpeed;
+    pt.vx *= 0.96;
+    pt.vy *= 0.96;
+    pt.life -= 0.026 * simSpeed;
+    if (pt.life <= 0) { particles.splice(i, 1); continue; }
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, pt.life));
+    ctx.fillStyle = pt.color;
+    ctx.shadowColor = pt.color;
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Textos flutuantes
   for (let i = floatTexts.length - 1; i >= 0; i--) {
     const ft = floatTexts[i];
-    ft.y -= 0.55; ft.life -= 0.016;
+    ft.y -= 0.55 * simSpeed;
+    ft.life -= 0.015 * simSpeed;
     if (ft.life <= 0) { floatTexts.splice(i, 1); continue; }
     ctx.save();
     ctx.globalAlpha = Math.min(1, ft.life * 1.4);
     ctx.fillStyle = ft.color;
+    ctx.shadowColor = "#000000"; ctx.shadowBlur = 6;
     ctx.font = "bold 11.5px monospace";
     ctx.textAlign = "center";
     ctx.fillText(ft.text, ft.x, ft.y);
     ctx.restore();
   }
 
+  // Gráfico HUD de Histórico de Risco IA no rodapé do Canvas
+  drawRiskHistoryHUD(g);
+
+  ctx.restore();
   requestAnimationFrame(updateAndDraw);
 }
 
@@ -1724,12 +2062,12 @@ function renderUI(state) {
     pill.textContent = "🧠 ESCUDO IA: LIGADO";
     pill.className = "pill pill-shield-on";
     btn4.className = "btn btn-ai-on";
-    btn4.innerHTML = '<span class="key">4</span> 🧠 Escudo IA: LIGADO';
+    btn4.innerHTML = '<span class="key">4</span> 🧠 IA: LIGADO';
   } else {
     pill.textContent = "⚠ ESCUDO IA: DESLIGADO";
     pill.className = "pill pill-shield-off";
     btn4.className = "btn btn-ai-off";
-    btn4.innerHTML = '<span class="key">4</span> ⚠ Escudo IA: DESLIGADO';
+    btn4.innerHTML = '<span class="key">4</span> ⚠ IA: DESLIGADO';
   }
 
   const feed = document.getElementById("feedList");
@@ -1793,21 +2131,59 @@ async function firePolymorphic() {
 async function fireMixed() {
   const data = await apiPost("/api/spawn-mixed");
   renderUI(data.state);
-  (data.packets || []).forEach((pkt, idx) => launchProjectile(pkt, idx * 340));
+  const gap = Math.round(360 / simSpeed);
+  (data.packets || []).forEach((pkt, idx) => launchProjectile(pkt, idx * gap));
+}
+
+async function fireStressWave() {
+  if (stressBusy) return;
+  stressBusy = true;
+  const btn7 = document.getElementById("btn7");
+  if (btn7) {
+    btn7.disabled = true;
+    btn7.innerHTML = '<span class="key">7</span> ⚡ Gerando...';
+  }
+  try {
+    const data = await apiPost("/api/spawn-stress", { count: 8 });
+    renderUI(data.state);
+    const gap = Math.round(420 / simSpeed);
+    (data.packets || []).forEach((pkt, idx) => launchProjectile(pkt, idx * gap));
+  } finally {
+    stressBusy = false;
+    if (btn7) {
+      btn7.disabled = false;
+      btn7.innerHTML = '<span class="key">7</span> ⚡ Onda x8';
+    }
+  }
+}
+
+function toggleSlowMo() {
+  simSpeed = simSpeed > 0.7 ? 0.4 : 1.0;
+  const btn6 = document.getElementById("btn6");
+  if (simSpeed < 0.7) {
+    btn6.className = "btn btn-speed-slow";
+    btn6.innerHTML = '<span class="key">6</span> ⏱ Vel: 0.4x';
+  } else {
+    btn6.className = "btn btn-speed-norm";
+    btn6.innerHTML = '<span class="key">6</span> ⏱ Vel: 1.0x';
+  }
 }
 
 async function toggleAI() {
   const data = await apiPost("/api/toggle-ai");
   renderUI(data.state);
   const g = getGeometry();
-  addRipple(g.radarX, g.radarY, data.ai_shield_enabled ? "#38bdf8" : "#ff4d5e", 76);
+  addShockwave(g.radarX, g.radarY, data.ai_shield_enabled ? "#38bdf8" : "#ff4d5e");
   addFloatText(g.radarX, g.radarY - 56, data.status_text, data.ai_shield_enabled ? "#7dd3fc" : "#ff4d5e");
 }
 
 async function resetArena() {
   projectiles.length = 0;
   effects.length = 0;
+  particles.length = 0;
   floatTexts.length = 0;
+  screenShake = 0;
+  quarPulse = 0;
   lastMutatedHash = "AGUARDANDO MUTAÇÃO...";
   lastMutatedEntropy = "0.00 bits/B";
   const data = await apiPost("/api/reset");
@@ -1821,6 +2197,8 @@ document.addEventListener("keydown", (e) => {
   else if (e.key === "3") fireMixed();
   else if (e.key === "4") toggleAI();
   else if (e.key === "5") resetArena();
+  else if (e.key === "6") toggleSlowMo();
+  else if (e.key === "7") fireStressWave();
 });
 
 fetch("/api/state")
@@ -1903,6 +2281,9 @@ def create_arena_handler(engine: CyberDuelArenaEngine, bound_port: int):
                 self._send_json(engine.spawn_polymorphic())
             elif path == "/api/spawn-mixed":
                 self._send_json(engine.spawn_mixed_wave())
+            elif path == "/api/spawn-stress":
+                req_count = body.get("count", 8)
+                self._send_json(engine.spawn_stress_wave(count=req_count))
             elif path == "/api/toggle-ai":
                 explicit = body.get("enabled") if "enabled" in body else None
                 self._send_json(engine.toggle_ai(explicit_state=explicit))
@@ -1998,8 +2379,8 @@ def main() -> None:
             "[white]Motor Ofensivo:[/white]   [yellow]polymorphic_simulator.py + ast_transform_engine.py (AST real + Sandbox)[/yellow]\n"
             "[white]Motor Defensivo:[/white]  [cyan]RandomForestClassifier + IsolationForest (scikit-learn, 6 features reais)[/cyan]\n"
             "[white]Endpoints REST:[/white]   [dim]/api/state • /api/spawn-original • /api/spawn-polymorphic • "
-            "/api/spawn-mixed • /api/toggle-ai • /api/reset[/dim]\n"
-            "[white]Atalhos na Tela:[/white]  [yellow][1] Original  [2] Polimórfico  [3] Misto  [4] Escudo IA  [5] Reset[/yellow]\n\n"
+            "/api/spawn-mixed • /api/spawn-stress • /api/toggle-ai • /api/reset[/dim]\n"
+            "[white]Atalhos na Tela:[/white]  [yellow][1] Original  [2] Polimórfico  [3] Misto  [4] IA  [5] Reset  [6] Vel 1x/0.4x  [7] Onda x8[/yellow]\n\n"
             "[bold yellow]Pressione Ctrl+C neste terminal para encerrar o servidor com segurança.[/bold yellow]",
             title="[bold white]Servidor Localhost Embutido (Zero Node/npm | Zero Mock)[/bold white]",
             border_style="cyan",
