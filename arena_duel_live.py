@@ -83,19 +83,19 @@ def extract_static_and_ast_features(file_path: Path, io_delta_bytes: int, net_pi
 
 def train_hybrid_defense():
     rng = np.random.default_rng(42)
-    # Features: [entropy, ast_nodes, has_exec, io_delta_kb, net_pings]
+    # Features reais: [entropy, ast_nodes, has_exec, io_delta_kb, net_pings]
     normal_x = np.column_stack([
         rng.normal(4.3, 0.4, 300),
         rng.normal(45, 15, 300),
         np.zeros(300),
-        rng.normal(4.0, 2.0, 300),
+        np.clip(rng.normal(0.35, 0.25, 300), 0.0, 1.2),
         np.zeros(300),
     ])
     attack_x = np.column_stack([
-        rng.uniform(5.3, 7.6, 300),
-        rng.uniform(15, 160, 300),
+        rng.uniform(4.8, 7.6, 300),
+        rng.uniform(20, 380, 300),
         rng.integers(0, 2, 300),
-        rng.uniform(12.0, 80.0, 300),
+        rng.uniform(1.0, 48.0, 300),
         rng.integers(1, 4, 300),
     ])
     X = np.vstack([normal_x, attack_x])
@@ -322,9 +322,16 @@ def main():
                     )
                     time.sleep(0.35)
 
-                    io_after = _read_proc_write_bytes(proc, fallback=io_before + 16384)
-                    io_delta = max(io_after - io_before, 14336)
-                    net_pings = max(TelemetryTCPHandler.ping_counter - pings_before, 1)
+                    io_after = _read_proc_write_bytes(proc, fallback=io_before)
+                    sandbox_dir = ROOT_DIR / "sandbox_env"
+                    sandbox_written = (
+                        sum(f.stat().st_size for f in sandbox_dir.rglob("*") if f.is_file())
+                        if sandbox_dir.exists()
+                        else 0
+                    )
+                    artifact_size = sample_path.stat().st_size if sample_path.exists() else 0
+                    io_delta = max(0, io_after - io_before) + sandbox_written + artifact_size
+                    net_pings = max(0, TelemetryTCPHandler.ping_counter - pings_before)
 
                     with watch_lock:
                         stats["watchdog_events"] = len(detected_files_queue)
