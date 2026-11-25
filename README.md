@@ -123,24 +123,25 @@ ai-cyber-duel/
 
 Todos os scripts são 100% multiplataforma (`pathlib.Path`, UTF-8 explícito e compatibilidade total com `python3`) e podem ser executados a partir da **raiz do repositório**.
 
-### 🐧 Opção 1: Linux Mint (Computador da Universidade)
+### 🐧 Opção 1: Linux Mint (Computador da Universidade — 100% sem `sudo`)
+
+Instalação em espaço de usuário (não exige privilégios administrativos nem `apt`, com fallback automático caso `python3-venv` não venha pré-instalado):
 
 ```bash
-# 1. Garanta que o suporte a venv e pip esteja instalado (caso ainda não esteja no Mint)
-sudo apt update && sudo apt install -y python3-venv python3-pip git
-
-# 2. Clone o repositório e entre na pasta
 git clone https://github.com/victorherculini/ai-cyber-duel.git
 cd ai-cyber-duel
-
-# 3. Crie e ative o ambiente virtual
-python3 -m venv .venv
+python3 -m venv .venv || (python3 -m pip install --user virtualenv && python3 -m virtualenv .venv)
 source .venv/bin/activate
-
-# 4. Instale as dependências
 python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements.txt
+python3 apresentar.py
 ```
+
+> **Nota (caso o `pip` não esteja instalado no Linux Mint da sala):** execute antes de criar o ambiente virtual (também 100% sem `sudo`):
+> ```bash
+> curl -sS https://bootstrap.pypa.io/get-pip.py | python3 - --user
+> ```
+> Se o laboratório restringir downloads, use o **GitHub Codespaces** (Opção 3 abaixo) direto no navegador em 1 clique.
 
 #### ✅ Checklist Rápido de Terminal no Linux Mint (Antes de Projetar)
 - **Ative o `.venv` e verifique a versão:** `source .venv/bin/activate && python3 --version` (Python 3.10+).

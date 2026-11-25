@@ -5,27 +5,28 @@
 
 ---
 
-## ✅ Checklist Rápido (2 Minutos Antes de Começar — Linux Mint)
+## ✅ Checklist Rápido (2 Minutos Antes de Começar — Linux Mint sem `sudo`)
 
 1. **Aba 1 do Navegador:** Abra `https://github.com/victorherculini/ai-cyber-duel` (dê zoom `Ctrl + +` para 125% ou 150% no projetor).
-2. **Terminal (Linux Mint):**
-   - Entre na pasta, ative o ambiente virtual e valide a instalação:
+2. **Terminal (Linux Mint — instalação 100% em espaço de usuário, sem `sudo`):**
+   - Primeira execução na máquina do laboratório (funciona mesmo sem `python3-venv` pré-instalado):
      ```bash
+     git clone https://github.com/victorherculini/ai-cyber-duel.git
      cd ai-cyber-duel
+     python3 -m venv .venv || (python3 -m pip install --user virtualenv && python3 -m virtualenv .venv)
      source .venv/bin/activate
+     python3 -m pip install --upgrade pip
+     python3 -m pip install -r requirements.txt
      export TERM=xterm-256color
-     python3 --version
      clear
-     ```
-   - Aumente a fonte (`Ctrl + Shift + +`) até ficar legível do fundo da sala.
-   - **Abra o menu interativo de 1 tecla:**
-     ```bash
      python3 apresentar.py
      ```
+   - *(Se o `pip` não estiver disponível na máquina da sala, rode antes `curl -sS https://bootstrap.pypa.io/get-pip.py | python3 - --user` ou abra direto o GitHub Codespaces no navegador.)*
+   - Aumente a fonte (`Ctrl + Shift + +`) até ficar legível do fundo da sala.
    - Confira no topo do menu a resolução detectada do terminal (`Terminal: LxA`): acima de **96 colunas** a Arena Ao Vivo exibe o **Split-Screen lado a lado**; em projetores muito estreitos (`< 96` colunas) ela adapta automaticamente para painéis empilhados sem cortar texto.
    - As opções gráficas abrem automaticamente no Linux Mint via `xdg-open` (`[7]` abre `dashboard_soc.png` e `[8]` abre `http://127.0.0.1:8080`, com fallback para `8081`). Para sair do servidor web `[8]` e voltar ao menu, pressione `Ctrl+C`.
    - *(Dica: ao final da apresentação, pressione `[0]` no menu para limpar automaticamente `sandbox_env/`, `quarantine/`, `generated_variants/`, `RELATORIO_INCIDENTE_SOC.md` e `dashboard_soc.png`.)*
-3. **Plano B (Emergência):** Se o laboratório bloquear `git clone` ou `apt`/`pip`, clique no botão verde **`Code → Codespaces → Create codespace on main`** no próprio GitHub — o `.devcontainer` instala tudo sozinho em ~1 minuto.
+3. **Plano B (Emergência):** Se o laboratório bloquear `git clone` ou `pip`, clique no botão verde **`Code → Codespaces → Create codespace on main`** no próprio GitHub — o `.devcontainer` instala tudo sozinho em ~1 minuto.
 
 ### Atalhos no Menu (`python3 apresentar.py`)
 | Tecla | Etapa / Ação | Comando Equivalente |
