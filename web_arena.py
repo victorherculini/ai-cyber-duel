@@ -1933,10 +1933,21 @@ def bind_arena_server(
 
 
 def open_browser_safely(url: str) -> None:
-    if sys.platform.startswith("linux") and not (
-        os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")
-    ):
-        return
+    """Abre o navegador de forma não-bloqueante sem poluir o terminal no Linux Mint."""
+    if sys.platform.startswith("linux"):
+        if not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
+            return
+        if shutil.which("xdg-open"):
+            try:
+                subprocess.Popen(
+                    ["xdg-open", url],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    start_new_session=True,
+                )
+                return
+            except OSError:
+                pass
     try:
         webbrowser.open(url, new=2)
     except Exception:

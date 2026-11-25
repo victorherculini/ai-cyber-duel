@@ -23,6 +23,7 @@
      python3 apresentar.py
      ```
    - Confira no topo do menu a resolução detectada do terminal (`Terminal: LxA`): acima de **96 colunas** a Arena Ao Vivo exibe o **Split-Screen lado a lado**; em projetores muito estreitos (`< 96` colunas) ela adapta automaticamente para painéis empilhados sem cortar texto.
+   - As opções gráficas abrem automaticamente no Linux Mint via `xdg-open` (`[7]` abre `dashboard_soc.png` e `[8]` abre `http://127.0.0.1:8080`, com fallback para `8081`). Para sair do servidor web `[8]` e voltar ao menu, pressione `Ctrl+C`.
    - *(Dica: ao final da apresentação, pressione `[0]` no menu para limpar automaticamente `sandbox_env/`, `quarantine/`, `generated_variants/`, `RELATORIO_INCIDENTE_SOC.md` e `dashboard_soc.png`.)*
 3. **Plano B (Emergência):** Se o laboratório bloquear `git clone` ou `apt`/`pip`, clique no botão verde **`Code → Codespaces → Create codespace on main`** no próprio GitHub — o `.devcontainer` instala tudo sozinho em ~1 minuto.
 

@@ -18,7 +18,7 @@
 Este repositório foi projetado para funcionar como **guia visual e laboratório executável ao vivo**, substituindo apresentações estáticas de slides. Durante o seminário, alternamos diretamente entre:
 
 1. **Esta página no GitHub** — para explorar a teoria, a tabela comparativa e o diagrama de arquitetura.
-2. **O Terminal ao Vivo** — executando uma simulação completa (e 100% segura) do duelo entre um **motor polimórfico (Red Team)** e um **Sistema de Detecção de Intrusões com Machine Learning (Blue Team)**.
+2. **O Terminal ao Vivo (`python3 apresentar.py`)** — executando um menu de 1 tecla com simulação polimórfica, mutação real via AST, telemetria real de SO (`watchdog` + `psutil`), gráficos Dark Mode SOC (`dashboard_soc.png`) e **Arena Tática Web animada em `http://127.0.0.1:8080`**.
 
 ---
 
@@ -263,6 +263,6 @@ python3 web_arena.py
 > **Uso Estritamente Acadêmico e Defensivo:**
 > Este projeto foi desenvolvido exclusivamente para fins educacionais no contexto da disciplina universitária de **Sistemas de Segurança**.
 >
-> - **Zero código malicioso real:** Todos os artefatos gerados pelo módulo `01-red-team-polymorphic` são scripts Python 100% benignos cuja única ação é exibir uma mensagem de demonstração no terminal (`"Simulacao de Payload Ativo"`).
+> - **Zero código malicioso real:** Todos os artefatos gerados são scripts Python 100% benignos que apenas exibem uma mensagem de demonstração (`"Simulacao de Payload Ativo"`) ou criam arquivos fictícios isolados dentro de `./sandbox_env/` com pings exclusivamente em loopback local (`127.0.0.1`).
 > - Nenhuma técnica aqui apresentada executa exploração de vulnerabilidades, persistência, escalonamento de privilégios, acesso não autorizado ou tráfego malicioso real.
 > - O objetivo é demonstrar cientificamente os fundamentos matemáticos do polimorfismo (efeito avalanche de hashes e elevação de entropia) e a eficácia de modelos de Machine Learning na detecção defensiva em tempo real.

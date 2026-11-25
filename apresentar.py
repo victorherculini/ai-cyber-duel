@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import platform
 import shutil
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -75,7 +76,7 @@ MENU_SCRIPTS: dict[str, tuple[str, Path, bool]] = {
     "8": (
         "Arena Tática Web no Navegador (localhost:8080)",
         ROOT_DIR / "web_arena.py",
-        False,
+        True,
     ),
 }
 
@@ -217,16 +218,39 @@ def run_module_script(choice: str, auto_mode: bool) -> int:
         f"\n[bold cyan]▶ Executando [{choice}] {title}...[/bold cyan]\n"
         f"[dim]Comando: {' '.join(cmd)}[/dim]\n"
     )
+    proc = subprocess.Popen(cmd, cwd=str(ROOT_DIR))
+    prev_sigterm = None
+
+    def _forward_sigterm(_signum: int, _frame: object) -> None:
+        if proc.poll() is None:
+            proc.terminate()
+        raise KeyboardInterrupt
+
+    if hasattr(signal, "SIGTERM"):
+        prev_sigterm = signal.signal(signal.SIGTERM, _forward_sigterm)
+
     try:
-        result = subprocess.run(cmd, cwd=str(ROOT_DIR), check=False)
-        if result.returncode != 0:
+        rc = proc.wait()
+        if rc != 0:
             console.print(
-                f"\n[bold yellow]⚠ O módulo encerrou com código {result.returncode}.[/bold yellow]"
+                f"\n[bold yellow]⚠ O módulo encerrou com código {rc}.[/bold yellow]"
             )
-        return result.returncode
+        return rc
     except KeyboardInterrupt:
-        console.print("\n[yellow]Execução interrompida pelo apresentador (Ctrl+C).[/yellow]")
-        return 130
+        # Aguarda o processo filho (ex.: web_arena.py) concluir o shutdown limpo
+        try:
+            proc.wait(timeout=4)
+        except subprocess.TimeoutExpired:
+            proc.terminate()
+            try:
+                proc.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+        console.print("\n[yellow]Execução encerrada pelo apresentador (Ctrl+C).[/yellow]")
+        return 0
+    finally:
+        if prev_sigterm is not None and hasattr(signal, "SIGTERM"):
+            signal.signal(signal.SIGTERM, prev_sigterm)
 
 
 def show_soc_report() -> None:
